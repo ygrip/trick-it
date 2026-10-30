@@ -1,0 +1,152 @@
+{
+  "id": "diff-checker",
+  "updated": "2026-10-30",
+  "about": [
+    "Diff Checker compares two pieces of text and shows what changed, in one of two modes. Text mode compares line by line, like a code review, and can produce a unified patch. JSON mode parses both sides and compares the structures, reporting each added, removed or modified value by its path, such as `$.server.port`. Choose the mode that matches your data: a config file edited by hand is a text problem, while two API responses whose keys came back in a different order are a JSON problem.",
+    "The comparison runs entirely in your browser. The README says input is never sent to a server, and the engine makes no network requests. You can paste text into either side or load local files with the shared file picker, view the result split or unified, copy it, and download it as a patch (text mode) or a change report (JSON mode).",
+    "A distinctive extra is the review radar. After a comparison it scans the changed lines or changed JSON paths for terms that often matter in configuration changes, such as `token`, `password`, `timeout`, `cors`, `port` or `enabled`, and lists the first eight so risky edits are not lost among cosmetic ones.",
+    "To clean up one side before comparing, format it first in [JSON Tools](/json-tools/). To find out which characters differ rather than which lines, [Text Manipulation](/text-manipulation/) and [Hex Studio](/hex-tools/) help reveal invisible differences such as trailing spaces or odd encodings."
+  ],
+  "features": [
+    {
+      "title": "Line-based text diff",
+      "body": "Computes a longest-common-subsequence alignment of lines and labels each as unchanged, added or removed with its original and new line numbers. Windows, old Mac and Unix line endings are normalised first."
+    },
+    {
+      "title": "Ignore whitespace and ignore case",
+      "body": "Two switches control matching. Ignore whitespace collapses runs of spaces and tabs and trims each line. Ignore case lowercases lines before comparing. Output still shows the original text."
+    },
+    {
+      "title": "Structural JSON comparison",
+      "body": "Both sides are parsed, so formatting, indentation and object key order do not matter. Changes are listed as add, remove or change with a path in the form `$.items[2].name`."
+    },
+    {
+      "title": "Unified patch and change report",
+      "body": "Text results can be exported as a patch with `---`, `+++` and `@@` headers. JSON results export as a `trick-it-json-change-report` document with counts and every change."
+    },
+    {
+      "title": "Review radar",
+      "body": "Flags changed lines or JSON paths containing risk-related words such as auth, secret, token, url, host, port, debug, enabled, public or scope, and shows up to eight with their location."
+    },
+    {
+      "title": "Split and unified views",
+      "body": "Switch between side-by-side and single-column views of the same result, and use Swap to exchange the two sides when you pasted them the wrong way round."
+    }
+  ],
+  "reference": {
+    "title": "How the comparison works and how to read the result",
+    "sections": [
+      {
+        "heading": "Text mode: the algorithm",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Text mode finds the longest common subsequence of lines using dynamic programming, which is the same idea behind classic diff. Lines in the subsequence are unchanged; everything else is a removal from the left or an addition on the right. A line that was edited therefore appears as one removal followed by one addition, and there is no word-level or character-level highlighting inside a changed line."
+          },
+          {
+            "type": "p",
+            "text": "Because the table is built for every pair of lines, size is bounded: each side may hold at most 150,000 characters and 900 lines. Larger inputs are refused with a message instead of being allowed to freeze the page. For files beyond that, a command-line `diff` or `git diff` is the right tool."
+          },
+          {
+            "type": "table",
+            "head": ["Situation", "How it appears"],
+            "rows": [
+              ["Line only on the right", "Added, with the new line number"],
+              ["Line only on the left", "Removed, with the old line number"],
+              ["Edited line", "One removal plus one addition"],
+              ["Texts differ only by ignored whitespace or case", "Result marked as identical under the current options"],
+              ["Only the final newline differs", "Reported as a change on the last line, like `\\ No newline at end of file` in a patch"]
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "JSON mode: paths and rules",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "JSON mode walks both documents together. Objects are compared key by key, with keys visited in sorted order, so `{\"a\":1,\"b\":2}` and `{\"b\":2,\"a\":1}` are equal. A key present on only one side is an addition or removal, and a differing scalar is a modification."
+          },
+          {
+            "type": "p",
+            "text": "Arrays are compared by position, not by identity. If an element is inserted at the start of a list, every later index differs and the report shows many modifications plus one addition at the end. That is accurate for ordered data but noisy for sets. Sort the arrays on both sides first if order is not meaningful."
+          },
+          {
+            "type": "list",
+            "ordered": false,
+            "items": [
+              "Paths start at `$`. Plain keys use dot notation (`$.server.port`), array elements use `[index]`, and keys with spaces or symbols use `[\"quoted key\"]`.",
+              "Complexity guards stop the comparison after 3,000 visited nodes or at depth 40.",
+              "Invalid JSON is reported separately for the left and right side so you know which one to fix.",
+              "A number such as `1.0` and `1` are equal after parsing, because JSON has one number type."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Using the review radar sensibly",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The radar is a keyword filter, not a security analysis. It matches terms case-insensitively anywhere in the path or line, so a field called `authorName` is flagged along with `auth`. Its value is triage: after a large config change, the radar shows whether any security-, network- or limit-related setting moved. It reports the total count even though only the first eight entries are listed."
+          },
+          {
+            "type": "note",
+            "text": "No match from the radar does not mean a change is safe. Values such as a changed image tag, a replaced dependency version or a flipped feature flag with an unlisted name are not flagged."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Find the risky change in a deployment config",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Two versions of a service config were exported with different key order. A text diff would show nearly every line as changed, so use JSON mode. Paste the old version on the left and the new one on the right."
+      },
+      {
+        "type": "code",
+        "language": "json",
+        "code": "// left\n{ \"port\": 8080, \"debug\": false, \"cors\": [\"https://a.example\"], \"timeout\": 30 }\n\n// right\n{ \"timeout\": 30, \"cors\": [\"https://a.example\", \"*\"], \"debug\": true, \"port\": 8080 }"
+      },
+      {
+        "type": "p",
+        "text": "Compare. Although the keys are in a different order, only two things changed. The report lists one modification at `$.debug` (false to true) and one addition at `$.cors[1]` with the value `*`. The review radar flags both paths because they contain `debug` and `cors`."
+      },
+      {
+        "type": "p",
+        "text": "What to do next: the wildcard origin is the finding. Download the change report to attach to the review, or switch to Text mode with the same input and notice how many lines it reports as different, which is why choosing the right mode matters."
+      }
+    ]
+  },
+  "limits": [
+    "Text mode is capped at 900 lines and 150,000 characters per side, and JSON mode at 3,000 nodes and depth 40.",
+    "Edited lines show as a removal plus an addition. There is no highlighting of the exact words or characters that changed within a line.",
+    "JSON arrays are compared by index and there is no move detection, so inserting an item at the start of a long array looks like many edits.",
+    "Only text and JSON are supported. XML, YAML, images and binary files must be converted or compared elsewhere.",
+    "Patches are produced for the whole file as a single hunk, so they are suited to reading and attaching, not to applying with a patch tool on files with long unchanged sections."
+  ],
+  "faq": [
+    {
+      "question": "Does Diff Checker upload my files?",
+      "answer": "No. Both sides are compared in your browser and nothing is sent to a server. Files you pick are read locally."
+    },
+    {
+      "question": "Why does JSON mode ignore key order?",
+      "answer": "JSON objects are unordered by definition, so two objects with the same keys and values are equal regardless of order. Arrays, which are ordered, are compared by position."
+    },
+    {
+      "question": "Why is my edited line shown as removed and added?",
+      "answer": "The text diff works on whole lines. A changed line is not in the common sequence, so it appears once on the left as removed and once on the right as added."
+    },
+    {
+      "question": "What does ignore whitespace do exactly?",
+      "answer": "It collapses runs of whitespace in each line to a single space and trims the ends before comparing. It does not ignore blank lines."
+    },
+    {
+      "question": "What is the review radar?",
+      "answer": "A shortcut that lists changes whose line or JSON path contains words like token, password, url, port or enabled. It helps you spot sensitive edits quickly but is not a security scanner."
+    }
+  ]
+}

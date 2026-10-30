@@ -1,0 +1,177 @@
+{
+  "id": "json-tools",
+  "updated": "2026-10-30",
+  "about": [
+    "JSON Tools is a four-operation workbench for the JSON and XML you paste out of API responses, log lines and config files. You choose an operation, paste input, press Run, and get formatted text back. The operations are Pretty-print JSON, JSONPath query, JSON to XML and XML to JSON.",
+    "Everything runs inside your browser tab. The bundle contains no network calls, no storage and no background polling, so a payload copied from a production response is parsed on your machine and nowhere else. Parsing uses the built-in `JSON.parse`, the `jsonpath-plus` library for queries and `fast-xml-parser` for XML.",
+    "The tool is deliberately strict. It refuses input that JavaScript would silently corrupt, such as integers beyond 2^53 - 1, and it refuses XML that declares a DOCTYPE or custom entities. That makes it a useful second opinion when a value looks different after passing through a pipeline.",
+    "Formatted JSON can be read as plain text or as a collapsible tree. If you need to compare two payloads afterwards, use [Diff Checker](/diff-checker/). If the JSON is an array of flat records and you need a spreadsheet, [CSV Studio](/csv-tools/) is the better next step."
+  ],
+  "features": [
+    {
+      "title": "Pretty-print with strict validation",
+      "body": "Input is parsed with `JSON.parse` and re-serialised with two-space indentation. A syntax error is reported as `Invalid JSON:` followed by the engine's own message, so you see where parsing stopped."
+    },
+    {
+      "title": "JSONPath queries without script evaluation",
+      "body": "Queries run through `jsonpath-plus` with `eval: false`, so property names, indexes, slices, wildcards and recursive descent work, while filter expressions that need script evaluation are disabled. The result is always an array, even for one match."
+    },
+    {
+      "title": "Two-way JSON and XML conversion",
+      "body": "JSON to XML wraps your data in a `<root>` element. XML to JSON validates the document first and reports the failing line number. Attributes map to keys starting with `@_` and mixed text maps to `#text`."
+    },
+    {
+      "title": "Text and Tree output views",
+      "body": "The Text view shows the full result, highlighted when the host supports it. The Tree view lets you expand or collapse branches, reveals large arrays and objects 100 entries at a time and has a Collapse all button."
+    },
+    {
+      "title": "Copy always gets the whole result",
+      "body": "Copy output copies the entire formatted text no matter which tree branches are open. If the browser or host declines clipboard permission, Select output highlights the text so you can use your normal keyboard shortcut."
+    },
+    {
+      "title": "Safe-number and unsafe-key guards",
+      "body": "Integers outside the JavaScript safe range and non-finite numbers are rejected rather than rounded. The keys `__proto__`, `constructor` and `prototype` are refused before querying or converting."
+    }
+  ],
+  "reference": {
+    "title": "How each operation behaves and where the data models differ",
+    "sections": [
+      {
+        "heading": "The four operations",
+        "blocks": [
+          {
+            "type": "table",
+            "head": ["Operation", "Input", "Output", "Notes"],
+            "rows": [
+              ["Pretty-print JSON", "JSON text", "JSON, 2-space indent", "Fails on trailing commas, comments and single quotes, which are not valid JSON"],
+              ["JSONPath", "JSON text plus a query", "JSON array of matches", "Query length is capped at 2,048 characters; an empty query asks for one"],
+              ["JSON to XML", "JSON text", "Indented XML under `<root>`", "Keys must be simple XML names"],
+              ["XML to JSON", "XML text", "JSON, 2-space indent", "DOCTYPE and ENTITY declarations are rejected"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Input is limited to 1,000,000 characters for every operation. Empty or whitespace-only input produces a prompt to paste something rather than a parse error."
+          }
+        ]
+      },
+      {
+        "heading": "JSONPath selectors you can rely on",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "JSONPath was standardised as RFC 9535 after years of library-specific behaviour, and implementations still differ at the edges. This tool uses `jsonpath-plus`, so check results against your own library before copying an expression into production code. The root query `$` is handled specially so that scalar roots such as `0` or `false` are returned instead of being lost."
+          },
+          {
+            "type": "table",
+            "head": ["Expression", "Selects"],
+            "rows": [
+              ["`$.items[0]`", "First element of `items`"],
+              ["`$.items[*].name`", "The `name` of every element"],
+              ["`$..price`", "Every `price` at any depth"],
+              ["`$.items[0:2]`", "A slice: elements 0 and 1"],
+              ["`$.items[-1]`", "The last element"]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "Filter expressions such as `[?(@.price > 5)]` depend on evaluating script and are turned off by `eval: false`. Expect an error message starting `Invalid or unsupported JSONPath` if you try one."
+          }
+        ]
+      },
+      {
+        "heading": "XML conversion rules",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "JSON and XML do not share a data model, so conversion is structural, not lossless. XML has no native null, no numbers and no distinction between a single child and a one-element array. The parser is configured with `parseTagValue: false` and `parseAttributeValue: false`, so every value that comes out of XML is a string. A price written as `<price>12.5</price>` becomes `\"12.5\"`, not `12.5`."
+          },
+          {
+            "type": "list",
+            "ordered": false,
+            "items": [
+              "Attributes use the prefix `@_`, so `<item id=\"1\">` becomes `{\"@_id\": \"1\"}`.",
+              "An element with both attributes and text stores the text under `#text`.",
+              "Repeated sibling elements become an array; a single element stays an object.",
+              "Standard entities (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`) and numeric character references are decoded.",
+              "Keys containing colons, spaces or leading digits cannot be written as XML names, so JSON to XML stops with `Cannot represent JSON key`."
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Rejecting DOCTYPE and ENTITY declarations blocks entity-expansion attacks such as the billion laughs pattern, where nested entity definitions explode a small document into gigabytes of text. For input from an untrusted source, that refusal is a feature."
+          }
+        ]
+      },
+      {
+        "heading": "Number precision",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "JSON numbers are parsed as IEEE 754 doubles. Integers above 9,007,199,254,740,991 cannot be represented exactly, so a database ID like `9007199254740993` would silently change to `9007199254740992` in most JavaScript tools. This one throws `Number exceeds safe JavaScript precision` instead. Fix the source by emitting such values as strings."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Pull product names out of an XML feed",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Goal: turn a small XML catalog into JSON, then extract just the names. Choose XML to JSON and paste this input, which is also what Load example inserts."
+      },
+      {
+        "type": "code",
+        "language": "xml",
+        "code": "<catalog>\n  <item id=\"1\"><name>Notebook</name><price>12.5</price></item>\n  <item id=\"2\"><name>Pen</name><price>2</price></item>\n</catalog>"
+      },
+      {
+        "type": "p",
+        "text": "Press Run. The output has `catalog.item` as an array of two objects. Each has `@_id`, `name` and `price`, and all three values are strings. Copy the output, switch the operation to JSONPath, paste it into the input box and enter this query:"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "code": "$.catalog.item[*].name"
+      },
+      {
+        "type": "p",
+        "text": "Run again. You should see an array containing `Notebook` and `Pen`. Change the query to `$..price` to get `[\"12.5\", \"2\"]`, which shows that the numbers stayed text through the XML hop. If the feed contained one item only, `item` would be an object instead of an array, and `$.catalog.item[*].name` would still work because the wildcard also iterates object values."
+      }
+    ]
+  },
+  "limits": [
+    "Processing is synchronous on the main thread. Very deep nesting or an expensive recursive query on a large document can freeze the tab, and the 1,000,000-character cap does not prevent that.",
+    "There is no schema validation, no sorting of keys and no minify option. Output is always indented with two spaces.",
+    "XML namespaces and colon-containing JSON keys are not supported for XML construction, and XML comments, processing instructions and mixed-content ordering are not preserved in a round trip.",
+    "JSONPath filter scripts are disabled. For complex filtering, query in your own code or use a dedicated tool such as `jq`.",
+    "To generate typed classes from JSON, use [POJO to Any](/pojo-to-any/) instead."
+  ],
+  "faq": [
+    {
+      "question": "Is my JSON uploaded anywhere?",
+      "answer": "No. The tool makes no network requests and uses no storage. Parsing, querying and conversion all happen in the page, and parser errors stay inside the page as well."
+    },
+    {
+      "question": "Why does my large ID get rejected?",
+      "answer": "JavaScript stores numbers as 64-bit floats, which are exact only up to 9,007,199,254,740,991. Larger integers would be rounded, so the tool throws an error instead of changing your data. Ask the producer to send the ID as a string."
+    },
+    {
+      "question": "Why are numbers in my XML-to-JSON output quoted?",
+      "answer": "XML has no number type, and the tool does not guess. Tag values and attribute values are kept as strings so that values like `007` or `1e3` are not altered."
+    },
+    {
+      "question": "Why does my JSONPath filter expression fail?",
+      "answer": "Filters of the form `[?(@.price > 5)]` need script evaluation, which is disabled with `eval: false` for safety. Use property paths, indexes, slices, wildcards or `..` recursion instead."
+    },
+    {
+      "question": "Does Copy output copy only the expanded tree?",
+      "answer": "No. Copy output always copies the complete formatted result, whatever is expanded or collapsed. The tree is a read-only view and never alters the converted JSON."
+    },
+    {
+      "question": "Why is DOCTYPE rejected in XML?",
+      "answer": "DOCTYPE and ENTITY declarations can define entities that expand recursively and exhaust memory. The tool refuses them and decodes only the five standard XML entities plus numeric references."
+    }
+  ]
+}

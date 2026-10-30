@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { getLocale } from '$lib/paraglide/runtime.js';
 import { tools } from '$lib/server/catalog';
 import { catalogToolForLocale } from '$lib/registry/catalog-locale.js';
+import { articleForTool, guidesForTool } from '$lib/server/content';
 
 export const prerender = true;
 export const entries = () => tools.map((tool) => ({ tool: tool.id }));
@@ -11,5 +12,9 @@ export const load: PageServerLoad = ({ params, url, depends }) => {
   depends(url.href);
   const tool = tools.find((candidate) => candidate.id === params.tool);
   if (!tool) error(404, 'Tool not found');
-  return { tool: catalogToolForLocale(tool, getLocale()) };
+  return {
+    tool: catalogToolForLocale(tool, getLocale()),
+    article: articleForTool(tool.id),
+    guides: guidesForTool(tool.id)
+  };
 };

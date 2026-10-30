@@ -3,6 +3,15 @@ import { isSupportedLanguage, languageCodes, stripLanguagePrefix } from '../lang
 export const SEO_LOCALES = [...languageCodes];
 // Bundled social-card fonts currently cover the reviewed English/Indonesian art.
 export const SOCIAL_CARD_LOCALES = ['en', 'id'];
+// Only locales with full editorial content (tool articles, guides) are indexed.
+// Other translations stay usable but render `noindex,follow`, leave the sitemap
+// and serve no ads, so near-duplicate UI translations are not judged as thin pages.
+export const INDEXED_LOCALES = ['en'];
+
+/** @param {string} locale */
+export function isIndexedLocale(locale) {
+  return INDEXED_LOCALES.includes(locale);
+}
 
 /** @param {string | undefined} value */
 export function siteOrigin(value = '') {
@@ -40,6 +49,14 @@ export function safeJsonLd(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
+/** Previews hide everything; production translations without editorial content stay crawlable but unindexed.
+ * @param {string} origin @param {boolean} indexable */
+function indexableRobots(origin, indexable) {
+  if (!origin) return 'noindex,nofollow';
+  if (!indexable) return 'noindex,follow';
+  return 'index,follow';
+}
+
 /** @typedef {{id:string,name:string,version:string,category:string,description?:string,locales?:string[],capabilities?:string[],addedAt?:string}} SeoTool */
 
 const applicationCategories = /** @type {Record<string, string>} */ ({ developer: 'DeveloperApplication', media: 'MultimediaApplication', data: 'BusinessApplication', productivity: 'UtilitiesApplication' });
@@ -54,10 +71,11 @@ export function seoMetadata(options) {
   if (!imagePath.startsWith('/') || imagePath.startsWith('//') || /[\\?#]/.test(imagePath)) throw new Error('SEO image must be a site-local asset path');
   const canonical = origin ? `${origin}${path}` : '';
   const image = origin ? `${origin}${imagePath}` : imagePath;
-  const alternates = origin ? SEO_LOCALES.map((language) => ({ locale: language, href: `${origin}${localePath(options.path, language, base)}` })) : [];
-  // The host indexes every production route, overriding tool/translation robots.
+  const alternates = origin ? INDEXED_LOCALES.map((language) => ({ locale: language, href: `${origin}${localePath(options.path, language, base)}` })) : [];
+  // The host decides indexing per locale, overriding tool/translation robots.
   // Unconfigured previews remain nonindexable regardless of tool metadata.
-  const indexable = Boolean(origin);
+  const indexable = Boolean(origin) && isIndexedLocale(locale);
+  const robots = indexableRobots(origin, indexable);
   const schema = options.tool ? {
     '@context': 'https://schema.org', '@type': 'WebApplication',
     ...(canonical ? { '@id': `${canonical}#application`, url: canonical } : {}),
@@ -73,7 +91,7 @@ export function seoMetadata(options) {
   } : null;
   return { title, description: options.description, path, canonical, image,
     imageAlt: `${options.tool?.name || 'trick-it'} — ${options.description}`,
-    keywords: (options.keywords || []).join(', '), robots: indexable ? 'index,follow' : 'noindex,nofollow',
+    keywords: (options.keywords || []).join(', '), robots,
     locale: /** @type {Record<string, string>} */ ({ en: 'en_US', id: 'id_ID', ms: 'ms_MY', fil: 'fil_PH', th: 'th_TH', vi: 'vi_VN', zh: 'zh_CN', my: 'my_MM', km: 'km_KH', lo: 'lo_LA', ja: 'ja_JP', hi: 'hi_IN' })[locale] ?? 'en_US', alternateLocale: locale === 'id' ? 'en_US' : 'id_ID',
     alternates, defaultHref: origin ? `${origin}${localePath(options.path, 'en', base)}` : '', schema };
 }

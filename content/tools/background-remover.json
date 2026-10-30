@@ -1,0 +1,152 @@
+{
+  "id": "background-remover",
+  "updated": "2026-10-30",
+  "about": [
+    "Background Remover cuts a subject out of a photo and saves it as a transparent PNG, a black-and-white mask or a background-only layer. It offers two ways to get there. Automatic removal runs a small neural network, U2NETP (a compact variant of U²-Net, a salient-object detection model), directly in your browser. If you would rather not download a model, the Remove a color mode flood-fills a flat background from the pixel you click, using only simple colour distance and no model at all.",
+    "It is built for product photos, profile pictures, stickers, slide artwork and quick design assets, where a clean cutout matters more than a studio-grade matte. After the first pass you refine the result with restore and erase brushes, grow or shrink the mask, soften the edge and check it against white, black and pink backgrounds. A before-and-after slider and a magnifier help you inspect fine edges.",
+    "Your image never leaves the device and there is no account or inference API. What is downloaded, if you allow it, are the helper files: the model, a WebAssembly runtime and optionally a rendering library. These are checked against SHA-256 hashes by the Trick-it host before use, and their hosts can see your IP address but never your pictures."
+  ],
+  "features": [
+    {
+      "title": "Automatic cutout with U2NETP",
+      "body": "The model runs on a single-threaded ONNX Runtime WebAssembly worker, so the page stays responsive and a job can be cancelled. The image is scaled to 320x320 for inference, and the resulting probability map is stretched to a 0 to 255 mask and scaled back to the original size."
+    },
+    {
+      "title": "Colour removal without a model",
+      "body": "Click the background and the tool selects connected pixels within a tolerance (0 to 100%, default 12) of the clicked colour, measured as distance in RGB space. It works best on flat studio backdrops, screenshots and logos."
+    },
+    {
+      "title": "Restore and Erase brushes",
+      "body": "Paint over mistakes with a brush sized 1 to 100 and hardness 0 to 100. Undo and redo are bounded to 20 steps or 16 MiB of history, whichever is reached first."
+    },
+    {
+      "title": "Edge controls",
+      "body": "Expand or contract the mask by up to 8 pixels either way, add up to 8 pixels of softness and view the result on contrasting backdrops. This helps remove halos or soften jagged edges."
+    },
+    {
+      "title": "Framing and backdrops",
+      "body": "Trim transparent margins, make the canvas square, add padding (0 to 30%, default 10%), place the subject on a solid colour or a gradient, and add a sticker outline of up to 8 pixels."
+    },
+    {
+      "title": "Three export types",
+      "body": "Download a transparent PNG cutout, a grayscale alpha mask for use in other editors or the background layer with a subject-shaped hole."
+    }
+  ],
+  "reference": {
+    "title": "How the removal works and what to expect",
+    "sections": [
+      {
+        "heading": "The two removal methods",
+        "blocks": [
+          {
+            "type": "table",
+            "head": ["Method", "Best for", "Weak at", "Downloads"],
+            "rows": [
+              ["Remove background (U2NETP)", "People, products, animals and objects against varied backgrounds", "Fine hair, glass, smoke, low contrast scenes and images with several subjects", "Model and runtime, about 17 MB once"],
+              ["Remove a color", "Flat or near-flat backgrounds such as white sweep, green screen or screenshots", "Gradients, shadows and backgrounds that share a colour with the subject", "Nothing"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "U2NETP finds the most salient region of an image, not named objects. It has no concept of 'the person on the left', so a photo with two prominent objects may keep both. In that case use the Erase brush on the one you do not want."
+          }
+        ]
+      },
+      {
+        "heading": "Helper files and their sizes",
+        "blocks": [
+          {
+            "type": "table",
+            "head": ["Resource", "Size (bytes)", "Used for"],
+            "rows": [
+              ["U2NETP ONNX model", "4,574,861", "Automatic subject detection"],
+              ["ONNX Runtime Web 1.24.3 (JS and WASM)", "12,434,557", "Running the model in a worker"],
+              ["CanvasKit 0.40.0 (JS and WASM)", "7,223,944", "Compositing image and mask layers; native canvas is the fallback"],
+              ["All enabled", "24,233,362", "Everything above"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Downloads happen only after you grant the host permissions for external assets, WebAssembly and workers. The files are cached by the browser, so later visits can work offline as long as the cache is not cleared. The first run needs an internet connection."
+          },
+          {
+            "type": "note",
+            "text": "The model worker and CanvasKit load from `blob:` URLs. If a site embedding the tool sends a Content-Security-Policy without `blob:` in `script-src` and `worker-src`, the browser blocks them and the tool shows a message about the policy."
+          }
+        ]
+      },
+      {
+        "heading": "Understanding the export modes",
+        "blocks": [
+          {
+            "type": "list",
+            "items": [
+              "Cutout PNG: the subject with an alpha channel. Framing, backgrounds, outlines and padding apply to this export.",
+              "Alpha mask: a grayscale image where white is kept and black is removed. Use it as a layer mask in another editor.",
+              "Background layer: the original with a subject-shaped hole. The tool does not invent the pixels that were hidden behind the subject, so it is not an inpainting feature."
+            ]
+          },
+          {
+            "type": "p",
+            "text": "PNG output is re-encoded without the original EXIF metadata, so location and camera data are dropped. A saved PNG may be at most 16 MB; if a high-resolution result is larger, choose a smaller output size. The resolution is never reduced silently."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Making a marketplace product photo",
+    "blocks": [
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Open a JPEG of a ceramic mug on a wooden table (up to 50 MB and 50 megapixels are accepted).",
+          "Choose Remove background and allow the optional permissions. The first time, about 17 MB of helper files download; later runs reuse them.",
+          "Switch the preview backdrop to white, then to black. A pale halo around the rim that is invisible on white shows up on black. Set Expand to -1 or -2 to pull the edge inward by that many pixels.",
+          "Use the Erase brush at hardness 75 to remove a bit of table the model kept near the handle, and the Restore brush to bring back a part of the handle that was lost.",
+          "Under framing, tick the square canvas, leave padding at 10% and pick a solid light grey background.",
+          "Choose Download PNG. Trick-it asks once for permission to download and remembers your answer."
+        ]
+      },
+      {
+        "type": "p",
+        "text": "To prepare the result for the web, run the PNG through [Image Compression](/image-compression/) or convert it to WebP with [Image Converter](/image-converter/). To touch up colour or crop afterwards, open it in [Image Editor](/image-editor/)."
+      }
+    ]
+  },
+  "limits": [
+    "Automatic removal cannot reliably separate fine hair, glass, fur against similar colours, motion blur or busy scenes. Expect to repair the mask by hand in those cases.",
+    "The model sees a 320x320 downscaled version, so very small details are approximated, and softening edges does not recover detail that was never detected.",
+    "The first automatic run needs a connection and about 17 MB of downloads (more with CanvasKit). Clearing browser data means downloading again.",
+    "Inputs are limited to JPEG, PNG and WebP up to 50 MB and 50 megapixels, and a saved PNG to 16 MB.",
+    "The background layer export has a hole where the subject was. It does not fill in what lay behind it.",
+    "Nothing is stored. Replacing or clearing the image discards the current workspace and its undo history."
+  ],
+  "faq": [
+    {
+      "question": "Is my picture uploaded to a server?",
+      "answer": "No. Detection, editing and export all run in your browser. Only the helper files are downloaded, and their providers can see your IP address but never the image."
+    },
+    {
+      "question": "Why does the first removal take longer?",
+      "answer": "The model, the WebAssembly runtime and optionally CanvasKit have to be downloaded, verified and compiled. After that they are cached and only the inference time remains."
+    },
+    {
+      "question": "Can I use it without downloading anything?",
+      "answer": "Yes. The Remove a color mode and the brushes are plain canvas code and need no helper files. Use it when the background is a flat colour."
+    },
+    {
+      "question": "Why are the edges jagged or haloed?",
+      "answer": "A binary-looking mask or leftover background pixels cause this. Increase softness slightly, contract the mask by a pixel or two, and inspect it on a dark backdrop where halos are most visible."
+    },
+    {
+      "question": "Which file should I save for a sticker or a logo?",
+      "answer": "Save the transparent PNG. Add the sticker outline in the framing controls first if you want a border, then download."
+    },
+    {
+      "question": "How do I get a smaller file?",
+      "answer": "Run it through [Image Compression](/image-compression/), or crop it first in [Image Editor](/image-editor/)."
+    }
+  ]
+}

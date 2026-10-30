@@ -1,0 +1,9 @@
+
+/* Editorial content blocks shared by tool articles and guides. */
+.tool-article code, .guide code { padding: 1px 6px; border-radius: 6px; background: var(--surface-strong, rgba(127, 127, 127, .14)); font-family: var(--font-mono, ui-monospace, monospace); font-size: .9em; overflow-wrap: anywhere; }
+.content-code { overflow-x: auto; padding: 16px; border-radius: 16px; background: var(--surface-strong, rgba(127, 127, 127, .12)); line-height: 1.5; }
+.content-code code { padding: 0; background: none; white-space: pre; overflow-wrap: normal; }
+.content-note { padding: 12px 16px; border-left: 4px solid var(--accent, currentColor); border-radius: 8px; background: var(--surface-strong, rgba(127, 127, 127, .08)); }
+.content-table { overflow-x: auto; margin: 12px 0; }
+.content-table table { border-collapse: collapse; min-width: 100%; font-size: 15px; }
+.content-table th, .content-table td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }

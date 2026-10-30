@@ -1,0 +1,216 @@
+{
+  "id": "og-metadata-generator",
+  "updated": "2026-10-30",
+  "about": [
+    "When someone pastes your link into Slack, LinkedIn, WhatsApp or X, the platform fetches your page, reads a handful of `<meta>` tags and shows a card with a title, a description and an image. If those tags are missing, the card is a bare URL or a badly cropped screenshot. The OG Metadata Generator builds both halves of the fix: the tags for your page head and the card images they point to, in the sizes each platform expects.",
+    "The editor renders a live Canvas preview. You type a title, a site name and optional alt text, pick a layout, choose a palette and optionally upload a background picture. When you upload one, the tool draws it full-bleed with a blur and a contrasting overlay behind the text, so any photo ends up readable. It then exports the selected sizes as JPEG or PNG and bundles them with ready-made markup into a ZIP.",
+    "Everything is generated in your browser. Your image and text are never uploaded, and the tool does not call any API. It also does not host the result: you upload the images from the ZIP to your own public folder and paste the generated tags into your page, because social crawlers must be able to fetch the image from a public HTTPS address."
+  ],
+  "features": [
+    {
+      "title": "Five card sizes",
+      "body": "Export 1200x630 (universal Open Graph), 1200x627 (LinkedIn), 1200x600 (X), 1080x1080 (square) and 600x600 (compact). The universal size is always exported and cannot be unticked; the others are optional. Each can be previewed from the preview size menu."
+    },
+    {
+      "title": "Automatic blurred background",
+      "body": "An uploaded PNG, JPEG or WebP is scaled to fill the card, blurred by 0 to 50 px (default 26) and covered with an overlay whose strength ranges from 15 to 85 (default 55), keeping the text legible whatever the photo."
+    },
+    {
+      "title": "Three layouts",
+      "body": "Choose Editorial split, Centered or Bottom aligned, set the headline size between 46 and 110 (default 70) and the title up to 90 characters. Layout changes redraw the preview immediately."
+    },
+    {
+      "title": "Complete head markup",
+      "body": "Generates the canonical link, `<title>`, meta description, Open Graph tags (title, type, url, description, site name, locale, image, secure URL, MIME type, width, height and alt) and X card tags. The description field takes up to 220 characters."
+    },
+    {
+      "title": "Website or article type",
+      "body": "A content-type switch sets `og:type` to website or article, which affects how some platforms label the preview."
+    },
+    {
+      "title": "ZIP bundle",
+      "body": "The download contains the images, `head-meta.html`, `metadata.json` and a README with upload instructions, so a developer can hand the folder over without explanation."
+    }
+  ],
+  "reference": {
+    "title": "Open Graph tags and image rules the output follows",
+    "sections": [
+      {
+        "heading": "The tags in head-meta.html",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Open Graph is a convention introduced by Facebook; most platforms read it, and X falls back to it when its own tags are absent. The generator writes both sets anyway, because an explicit `twitter:card` value is what selects the large-image layout on X."
+          },
+          {
+            "type": "table",
+            "head": [
+              "Tag",
+              "Purpose",
+              "Notes"
+            ],
+            "rows": [
+              [
+                "`og:title`",
+                "Headline of the card",
+                "Taken from your title; keep it near 60 characters to avoid truncation"
+              ],
+              [
+                "`og:description`",
+                "One-line summary",
+                "Platforms cut it off at different lengths"
+              ],
+              [
+                "`og:url`",
+                "Canonical address of the page",
+                "Must be the HTTPS URL you entered; it is also written as a canonical link"
+              ],
+              [
+                "`og:image`, `og:image:secure_url`",
+                "Absolute URL of the card image",
+                "Public image folder URL plus a file name of the form `og-1200x630.jpg` (`.png` if PNG is chosen); always the universal size"
+              ],
+              [
+                "`og:image:width`, `og:image:height`, `og:image:type`",
+                "Tell the crawler the size and format without downloading it",
+                "Width and height are always 1200 and 630; type follows the chosen format"
+              ],
+              [
+                "`og:image:alt`, `twitter:image:alt`",
+                "Accessible description of the picture",
+                "The alt field accepts up to 150 characters"
+              ],
+              [
+                "`twitter:card`, `twitter:image`",
+                "Selects the card layout on X and its image",
+                "`summary_large_image`; the image is the X size (1200x600) when ticked, otherwise the universal one"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Why these sizes",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "1200x630 is a 1.91:1 ratio, the de facto standard shown by Facebook, Slack, Discord, iMessage and many others. LinkedIn crops to 1200x627, X's large summary card uses a 2:1 ratio (1200x600), and the two square sizes suit chat apps and avatar-style previews. When a crawler gets an image it does not like, it may crop from the centre, so the layouts keep the text inside a safe area rather than against the edges."
+          },
+          {
+            "type": "list",
+            "items": [
+              "Choose JPEG for photographic backgrounds: files are much smaller than PNG and fast to fetch.",
+              "Choose PNG when the card is mostly flat colour and text and you want crisp edges.",
+              "Keep files well under a few hundred kilobytes where possible; some crawlers give up on slow or very large images."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Input and export limits",
+        "blocks": [
+          {
+            "type": "table",
+            "head": [
+              "Item",
+              "Limit"
+            ],
+            "rows": [
+              [
+                "Upload formats",
+                "PNG, JPEG, WebP"
+              ],
+              [
+                "Upload size",
+                "12 MB, and a 20 megapixel cap on decoded dimensions"
+              ],
+              [
+                "Title",
+                "90 characters"
+              ],
+              [
+                "Site name",
+                "60 characters"
+              ],
+              [
+                "Alt text",
+                "150 characters"
+              ],
+              [
+                "ZIP size",
+                "16 MiB, the cap on host-mediated downloads"
+              ]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "The ZIP is written by a small built-in writer that stores files without compression and adds CRC-32 checksums. Images are already compressed, so nothing is lost, but if the total reaches 16 MiB the export fails. Choose JPEG or fewer sizes."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Publishing a blog post card",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "You have published a post at `https://acme-studio.dev/blog/zero-downtime-deploys/` and want it to look good in Slack and on LinkedIn."
+      },
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Set the title to 'Zero-downtime deploys', the site name to your brand, content type to Article and the canonical URL to the post address.",
+          "Set the public image folder to `https://acme-studio.dev/images/social`.",
+          "Upload a 1600x900 photo, raise the blur to 34 and the overlay to 60 if the photo is busy, and choose Editorial split.",
+          "Tick 1200x630 and 1200x627, choose JPEG and check the preview.",
+          "Download the ZIP, upload the files in `images/` to `/images/social/` on your server, and paste `head-meta.html` into the `<head>` of the post."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "html",
+        "code": "<link rel=\"canonical\" href=\"https://acme-studio.dev/blog/zero-downtime-deploys/\">\n<meta property=\"og:type\" content=\"article\">\n<meta property=\"og:title\" content=\"Zero-downtime deploys\">\n<meta property=\"og:image\" content=\"https://acme-studio.dev/images/social/og-1200x630.jpg\">\n<meta property=\"og:image:width\" content=\"1200\">\n<meta property=\"og:image:height\" content=\"630\">\n<meta name=\"twitter:card\" content=\"summary_large_image\">"
+      },
+      {
+        "type": "p",
+        "text": "The file names above illustrate the pattern; use the exact names found in your ZIP. After publishing, open the link in the platform's own preview or debugger, as most cache the first result they fetch."
+      }
+    ]
+  },
+  "limits": [
+    "It cannot audit a live page. The tool runs inside an isolated frame and does not fetch remote URLs, so verify the result with each platform's debugger after you publish.",
+    "It does not host images. The image folder URL you type is only written into the tags; the files must be uploaded by you and served over public HTTPS.",
+    "Platforms crop and cache differently, and a change to an image at the same URL may not appear until their cache expires. Use a new file name when you update a card.",
+    "Uploads above 12 MB or 20 megapixels are rejected, and a ZIP above 16 MiB cannot be exported.",
+    "The text rendering is a single title and site name per card. Complex designs belong in [Image Editor](/image-editor/).",
+    "Tag validation is strict: the canonical URL and image folder must be HTTPS addresses with a real host. Placeholders such as example.com, your-domain.com and localhost are rejected, and the folder URL cannot contain a query string or fragment."
+  ],
+  "faq": [
+    {
+      "question": "Are my images uploaded to a server?",
+      "answer": "No. The upload is decoded and drawn on a canvas in your browser, and the ZIP is built there as well. Downloads and clipboard writes only happen after the host asks for your permission."
+    },
+    {
+      "question": "What size should an Open Graph image be?",
+      "answer": "1200x630 pixels is the safest default. Add 1200x627 for LinkedIn and 1200x600 for X if you want each platform's crop to be exact."
+    },
+    {
+      "question": "Why does the preview not update after I publish?",
+      "answer": "Social platforms cache the card the first time they see a URL. Use their debugger or re-share tool, or upload the new image under a different file name."
+    },
+    {
+      "question": "Does the tool need an image?",
+      "answer": "No. Without an upload it draws a colour background from the palette, so you can still export a clean text card."
+    },
+    {
+      "question": "How can I make the exported images smaller?",
+      "answer": "Choose JPEG, export fewer sizes, or pass the result through [Image Compression](/image-compression/). Use [Image Converter](/image-converter/) if you need WebP or AVIF versions."
+    },
+    {
+      "question": "Can I check my meta tags afterwards?",
+      "answer": "Yes. Use [SEO Checker](/seo-checker/) to review the title, description and tag length of the HTML you are about to publish."
+    }
+  ]
+}

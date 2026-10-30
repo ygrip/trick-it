@@ -6,6 +6,7 @@ import { join, dirname } from 'node:path';
 import { verifySeoBuild } from '../scripts/verify-seo.mjs';
 import { sitemapXml, robotsText } from '../scripts/generate-seo.mjs';
 import { languageCodes } from '../src/lib/languages.js';
+import { INDEXED_LOCALES } from '../src/lib/seo/metadata.js';
 
 const origin = 'https://tools.example';
 
@@ -34,22 +35,22 @@ async function fixture(site = origin, tools = []) {
 test('production build requires canonical, nonempty sitemap and real localized HTML files', async () => {
   const { root } = await fixture();
   try {
-    assert.deepEqual(await verifySeoBuild({ root, requireProduction: true }), { origin, pages: languageCodes.length * 4 });
-    await unlink(join(root, 'build/id/privacy/index.html'));
+    assert.deepEqual(await verifySeoBuild({ root, requireProduction: true }), { origin, pages: INDEXED_LOCALES.length * 4 });
+    await unlink(join(root, 'build/privacy/index.html'));
     await assert.rejects(verifySeoBuild({ root, requireProduction: true }), /ENOENT/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('36 tools produce 480 unique published indexable pages despite tool noindex flags', async () => {
+test('36 tools produce one indexable page per indexed locale despite tool noindex flags', async () => {
   const tools = Array.from({ length: 36 }, (_, index) => ({
     id: `fixture-${index}`, path: `/fixture-${index}`, seo: { robots: 'noindex' },
     translations: Object.fromEntries(languageCodes.map((locale) => [locale, { seo: { robots: 'noindex' } }]))
   }));
   const { root } = await fixture(origin, tools);
   try {
-    assert.deepEqual(await verifySeoBuild({ root, requireProduction: true }), { origin, pages: 480 });
+    assert.deepEqual(await verifySeoBuild({ root, requireProduction: true }), { origin, pages: INDEXED_LOCALES.length * 40 });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -58,7 +59,7 @@ test('36 tools produce 480 unique published indexable pages despite tool noindex
 test('published noindex HTML fails validation even when its URL is in the sitemap', async () => {
   const { root, save } = await fixture();
   try {
-    await save('build/zh/index.html', '<html><head><meta name="robots" content="noindex,nofollow"></head></html>');
+    await save('build/index.html', '<html><head><meta name="robots" content="noindex,nofollow"></head></html>');
     await assert.rejects(verifySeoBuild({ root }), /Published page is not indexable/);
   } finally {
     await rm(root, { recursive: true, force: true });

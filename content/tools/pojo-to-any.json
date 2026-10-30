@@ -1,0 +1,157 @@
+{
+  "id": "pojo-to-any",
+  "updated": "2026-10-30",
+  "about": [
+    "POJO to Any converts between data samples and model declarations. In one direction you paste JSON, XML or CSV and get class, struct or interface definitions in Java, Go, C++, C#, Rust, Python, TypeScript, Kotlin or Swift. In the other direction you paste field declarations in any of those nine languages and get sample JSON, XML or flat CSV that has the same shape.",
+    "The common job is the first one: an API returns a JSON body, and you need a typed model before you can write the client. The tool reads the sample, builds a small type tree, merges every element of each array into one inferred element type, and prints idiomatic declarations with nested types extracted into their own classes. The reverse direction helps when you have the model but need fixture data for a test or documentation.",
+    "All conversion happens in the page with no server, API key or analytics, and no source code you paste is evaluated or executed. The converter reads text only. The output is a starting point: it knows nothing about your validation rules, naming conventions or inheritance, and it infers types from the samples you give it, not from a contract.",
+    "If you need to inspect or reshape the sample first, use [JSON Tools](/json-tools/) or [CSV Studio](/csv-tools/). When you want believable sample values instead of the placeholders this tool generates, [Fake Data Generator](/fake-data-generator/) produces richer records."
+  ],
+  "features": [
+    {
+      "title": "Nine target languages",
+      "body": "Java, Go, C++, C#, Rust, Python, TypeScript, Kotlin and Swift. Each uses its own type names, list type and optional syntax, such as `Option<T>` in Rust, `Optional[T]` in Python and `T?` in Kotlin."
+    },
+    {
+      "title": "Three input formats",
+      "body": "JSON, XML and CSV are parsed into the same internal tree. XML attributes get an `@` prefix and repeated elements become arrays. CSV needs flat rows and is capped at 10,000 data rows."
+    },
+    {
+      "title": "Array merging and optional fields",
+      "body": "Every array element is merged into one type. A field missing from some objects, or null in a sample, is marked optional. Mixed integers and decimals become a floating-point type."
+    },
+    {
+      "title": "Nested class extraction",
+      "body": "Nested objects become separate types named from their property, deduplicated with a numeric suffix. Names that clash with a reserved word or start with a digit are rewritten safely."
+    },
+    {
+      "title": "Reverse direction: models to data",
+      "body": "Field declarations are parsed from class, struct or interface source and turned into representative JSON, XML or flat CSV. Option and optional wrappers are unwrapped when picking sample values."
+    },
+    {
+      "title": "Local files and bounded input",
+      "body": "Files can be imported through the host's picker or drop zone. Input is capped at 1,000,000 characters and nesting at 24 levels, and XML DTDs and custom entities are rejected."
+    }
+  ],
+  "reference": {
+    "title": "Type inference rules and per-language output",
+    "sections": [
+      {
+        "heading": "How types are inferred",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Inference follows a handful of rules, applied identically for every language before rendering. Understanding them tells you when to correct the output by hand."
+          },
+          {
+            "type": "table",
+            "head": ["Sample value", "Inferred kind", "Notes"],
+            "rows": [
+              ["`\"text\"`", "string", "Dates and UUIDs stay strings"],
+              ["`true`", "boolean", ""],
+              ["`42`", "integer", "Emitted as a 64-bit type such as `long`, `int64` or `i64`"],
+              ["`4.5`", "number", "Emitted as a 64-bit float (`double`, `float64`, `f64`)"],
+              ["`null`", "unknown", "Becomes `Object`, `Any`, `unknown` or `interface{}` and is marked optional"],
+              ["`[1, 2.5]`", "array of number", "Integers and decimals merge to number"],
+              ["`[1, \"a\"]`", "array of unknown", "Mixed primitives collapse to the language's any type"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Because every integer is emitted at 64 bits, a field that fits in `int` still shows as `long` in Java. Narrow it by hand if your API contract says 32 bits. A root value that is an array is wrapped in an `items` field so there is always a root object."
+          }
+        ]
+      },
+      {
+        "heading": "What each language receives",
+        "blocks": [
+          {
+            "type": "table",
+            "head": ["Language", "Declaration style", "Mapping detail"],
+            "rows": [
+              ["Java", "`public class` with public fields", "`import java.util.List`; no getters, setters or annotations"],
+              ["Go", "`struct`", "Field names exported with `json:\"name\"` tags"],
+              ["C++", "`struct`", "`std::string`, `std::vector`, `std::optional`"],
+              ["C#", "`public class` with properties", "`[JsonPropertyName]` from System.Text.Json; nullable value types use `?`"],
+              ["Rust", "`struct` deriving Debug, Clone, Serialize, Deserialize", "Serde; optional fields become `Option<T>`; no `rename` attributes are generated"],
+              ["Python", "`@dataclass`", "`Optional[...]`, `list[...]`, `Any`"],
+              ["TypeScript", "`export interface`", "Quoted property names; `?:` marks optional"],
+              ["Kotlin", "`data class`", "`val` parameters; nullable types for optional"],
+              ["Swift", "`struct` conforming to `Codable`", "`Int64`, `Double`; optional with `?`"]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "Where a JSON key is not a valid identifier, such as `user-name`, the Java, C++, Rust, Python, Kotlin and Swift output rewrites the identifier to camel case (`userName`) but only C# and Go carry the original name in an attribute or tag. For Java, Rust and Swift you must add the mapping annotation or `CodingKeys` yourself."
+          }
+        ]
+      },
+      {
+        "heading": "Format-specific behaviour",
+        "blocks": [
+          {
+            "type": "list",
+            "ordered": false,
+            "items": [
+              "XML: attributes appear as `@name` keys in the intermediate object, and elements that repeat become arrays. DOCTYPE and ENTITY declarations are refused.",
+              "CSV: each row becomes an object, so columns become fields. Nested structures cannot be expressed and may be rejected when writing CSV from a model.",
+              "Large integers: JavaScript parses JSON numbers as doubles, so quote any integer above 9,007,199,254,740,991 as a string in the sample.",
+              "Models to data: values are placeholders chosen from the declared type, not data from a running program."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Generate a Kotlin model from an API response",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Paste this JSON, choose Data to Models, set the language to Kotlin and name the root `Order`."
+      },
+      {
+        "type": "code",
+        "language": "json",
+        "code": "{\n  \"id\": 1001,\n  \"total\": 59.9,\n  \"coupon\": null,\n  \"customer\": { \"name\": \"Ana\", \"vip\": true },\n  \"lines\": [\n    { \"sku\": \"A1\", \"qty\": 2 },\n    { \"sku\": \"B2\", \"qty\": 1, \"note\": \"gift\" }\n  ]\n}"
+      },
+      {
+        "type": "p",
+        "text": "Expect three data classes. `Order` has `id: Long`, `total: Double`, `coupon: Any?` (null gives an unknown type, flagged optional), `customer: Customer` and `lines: List<LinesItem>`. `LinesItem` has `sku: String`, `qty: Long` and `note: String?`, optional because only one of the two elements has it. That merge across array elements is the main reason to use a tool instead of writing the class from the first element."
+      },
+      {
+        "type": "p",
+        "text": "Review step: `coupon: Any?` needs a real type from the API contract, and `qty` may be narrower than `Long`. Switch the language to Rust or TypeScript with the same sample to compare how optionality is spelled."
+      }
+    ]
+  },
+  "limits": [
+    "This generates declarations, not serialization code. Annotations, getters and setters, builders, validation, inheritance, unions and custom serializers are out of scope.",
+    "Types come from the sample alone. A field that is always a string in your sample but sometimes a number in production is typed wrongly, and an empty array gives an unknown element type.",
+    "Model parsing covers common field declaration forms, not arbitrary syntax, annotations or macros, and the generated sample values are placeholders.",
+    "Generated code may need imports, library dependencies or key-mapping annotations before it compiles in your project, particularly for Java, Rust and Swift.",
+    "For protobuf schemas use [Protobuf Studio](/protobuf-studio/) instead, since this tool does not generate `.proto` files."
+  ],
+  "faq": [
+    {
+      "question": "Why is an optional field typed as Any or Object?",
+      "answer": "A null in the sample reveals nothing about the real type, so the field is marked optional and given the language's catch-all type. Replace it with the actual type from your API documentation."
+    },
+    {
+      "question": "Why are all integers 64-bit?",
+      "answer": "A sample cannot show the legal range of a field, so the converter uses the widest common integer type. Narrow it by hand where your contract guarantees smaller values."
+    },
+    {
+      "question": "How do nested objects inside arrays get names?",
+      "answer": "The property name gets an `Item` suffix, so objects in `lines` become `LinesItem`. If two types would share a name, a number such as 2 is appended."
+    },
+    {
+      "question": "Is my source code or data uploaded?",
+      "answer": "No. Conversion runs in your browser, nothing is sent to a server, and pasted source code is parsed as text and never executed."
+    },
+    {
+      "question": "What is the size limit?",
+      "answer": "Input is limited to one million characters, CSV to 10,000 data rows and object nesting to 24 levels. Larger or deeper input produces an error."
+    }
+  ]
+}

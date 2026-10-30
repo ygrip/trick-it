@@ -8,6 +8,7 @@
   import ToolRuntime from '$lib/components/ToolRuntime.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import ToolArt from '$lib/components/ToolArt.svelte';
+  import ToolArticle from '$lib/components/ToolArticle.svelte';
   import { recordRecentTool } from '$lib/recent';
   import Seo from '$lib/components/Seo.svelte';
   import { localizedPath } from '$lib/i18n';
@@ -38,6 +39,7 @@
     <p>{m.tool_isolated()}</p>
     <a class="clay-button small" href={localizedPath('/policy/')}>{m.tool_policy_link()} <Icon name="arrow-right" size={18} /></a>
   </aside>
+  {#if data.article}<ToolArticle article={data.article} toolName={tool.name} guides={data.guides} />{/if}
   {#key tool.id}<AdSlot placement="tool" />{/key}
   <noscript>{m.tool_noscript()}</noscript>
   <SiteFooter />

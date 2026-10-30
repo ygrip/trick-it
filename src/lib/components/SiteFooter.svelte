@@ -20,6 +20,7 @@
       <ul>
         <li><a href={`${localizedPath('/')}#tools`}><Icon name="grid" size={17} /> {m.nav_toolbox()}</a></li>
         <li><a href={`${localizedPath('/')}#how-it-works`}><Icon name="sparkles" size={17} /> {m.nav_how()}</a></li>
+        <li><a href={`${base}/guides/`} lang="en"><Icon name="sparkles" size={17} /> Guides</a></li>
         <li><a href={`${localizedPath('/')}#support`}><Icon name="heart" size={17} /> {m.footer_support()}</a></li>
         <li><a href="https://github.com/ygrip/open-tools" target="_blank" rel="noreferrer" aria-label={m.brand_github()}><Icon name="github" size={17} /> {m.footer_open_source()}</a></li>
       </ul>

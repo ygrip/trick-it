@@ -11,6 +11,7 @@
     "check": "npm run i18n:compile && npm run seo:generate && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "registry:sync": "node scripts/sync-tools.mjs",
     "seo:generate": "node scripts/generate-seo.mjs",
+    "content:validate": "node scripts/validate-content.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
     "performance:check": "node scripts/check-performance.mjs",
@@ -18,7 +19,7 @@
     "i18n:compile": "paraglide-js compile --project ./project.inlang && node scripts/generate-host-locales.mjs",
     "services:generate": "node scripts/generate-services.mjs",
     "pretest": "npm run i18n:compile && npm run services:generate",
-    "build:verified": "node scripts/verify-registry-snapshot.mjs && npm run services:generate && npm run seo:generate && npm run i18n:compile && vite build && node scripts/export-error-page.mjs && node scripts/verify-seo.mjs"
+    "build:verified": "node scripts/verify-registry-snapshot.mjs && node scripts/validate-content.mjs --require-all && npm run services:generate && npm run seo:generate && npm run i18n:compile && vite build && node scripts/export-error-page.mjs && node scripts/verify-seo.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

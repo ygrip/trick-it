@@ -1,0 +1,170 @@
+{
+  "id": "hex-tools",
+  "updated": "2026-10-30",
+  "about": [
+    "Hex Studio is four small utilities for working with bytes: a UTF-8 text and hexadecimal converter, a whole-number base converter, a bitwise calculator, and a byte inspector that shows offsets, ASCII and file signatures. Each lives on its own tab. They cover the routine low-level questions a developer asks, such as what bytes this string becomes, what 0xDEADBEEF is in decimal, what a mask leaves behind, or what kind of file these bytes begin like.",
+    "The tool runs in the browser with no upload, analytics or backend. Files you choose for inspection are read locally with the browser's file API, and anything you paste stays in the page. Numeric work uses JavaScript `BigInt`, so there is no 53-bit precision ceiling for conversions and bit operations.",
+    "Hex is just a notation for bytes: two characters per byte, each character a nibble of four bits. That makes it the common ground between binary protocols, hashes, colors, memory dumps and text encodings, which is why the tab set stays small and each tab does one job well. To turn bytes into other textual encodings use [Encoder / Decoder](/encoder-decoder/), to produce digests see [Hash Generator](/hash-generator/), and to decode a binary protocol with a schema try [Protobuf Studio](/protobuf-studio/)."
+  ],
+  "features": [
+    {
+      "title": "Live text and hex conversion",
+      "body": "Typing in either box updates the other. Text is encoded as UTF-8, so accented letters and emoji produce multi-byte sequences. Options add a `0x` prefix to each byte and choose spaces between bytes."
+    },
+    {
+      "title": "Tolerant hex input",
+      "body": "Pasted hex may contain `0x` markers, spaces, commas, semicolons, colons, underscores and dashes. These are stripped before decoding, so dumps from different tools paste cleanly."
+    },
+    {
+      "title": "Base conversion for large integers",
+      "body": "Enter a whole number in decimal, hexadecimal, binary or octal and see all four at once. Negative values and numbers up to 256 digits are handled exactly."
+    },
+    {
+      "title": "Bitwise calculator with fixed widths",
+      "body": "AND, OR, XOR, NOT and left or right shifts on 8, 16, 32, 64 or 128-bit values. Results are masked to the chosen width and shown in hex, decimal and zero-padded binary."
+    },
+    {
+      "title": "Byte inspector",
+      "body": "Paste hex or open a local file of up to 512 KB. A hex and ASCII view shows 256 bytes at a time in rows of 16 with offsets. Clicking a byte shows its hex, decimal, binary and character value."
+    },
+    {
+      "title": "Signature detection",
+      "body": "The first bytes are matched against magic numbers for PNG, JPEG, GIF, PDF, ZIP, GZIP, ELF and WebP, so you can tell what a file claims to be regardless of its extension."
+    }
+  ],
+  "reference": {
+    "title": "Byte, base and bit reference with the tool's exact rules",
+    "sections": [
+      {
+        "heading": "Text to hex: why byte counts differ from characters",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "UTF-8 (RFC 3629) encodes each code point in one to four bytes. ASCII characters use one byte each, most accented Latin letters use two, many Asian scripts use three and emoji use four. So the text `Hello 👋` is six ASCII characters plus a four-byte emoji: ten bytes, not seven."
+          },
+          {
+            "type": "table",
+            "head": ["Text", "UTF-8 bytes", "Count"],
+            "rows": [
+              ["`A`", "`41`", "1"],
+              ["`é`", "`C3 A9`", "2"],
+              ["`€`", "`E2 82 AC`", "3"],
+              ["`👋`", "`F0 9F 91 8B`", "4"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Going from hex back to text, decoding is strict. If the bytes are not valid UTF-8, for example a lone `FF`, the tool reports an error instead of substituting replacement characters, which makes it a quick test of whether a byte string is really text. Hex input must have an even number of digits and is limited to 1,048,576 digits."
+          }
+        ]
+      },
+      {
+        "heading": "Number bases and the bitwise tab",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Number conversion accepts a sign and, for base 16, an optional `0x` prefix. Digits invalid for the chosen base, such as `9` in octal, produce an error. Output is upper case."
+          },
+          {
+            "type": "p",
+            "text": "The bitwise tab takes two hexadecimal operands and masks them to the selected width before the operation. Negative inputs therefore behave as two's complement: `-1` at 8 bits is `FF`. NOT flips every bit inside the width, so `NOT F0` at 8 bits is `0F`, and shifts discard bits that move past the top. A shift amount must be a whole number from 0 to 128."
+          },
+          {
+            "type": "table",
+            "head": ["Operation", "A", "B", "Width", "Result"],
+            "rows": [
+              ["AND", "`F0`", "`0F`", "8", "`00`"],
+              ["OR", "`F0`", "`0F`", "8", "`FF`"],
+              ["XOR", "`FF`", "`0F`", "8", "`F0`"],
+              ["Shift left 4", "`1F`", "", "8", "`F0`"],
+              ["Shift right 4", "`F0`", "", "8", "`0F`"]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "Shifts here are logical and unsigned. There is no arithmetic (sign-extending) right shift, so results for negative numbers differ from a signed `>>` in C or Java."
+          }
+        ]
+      },
+      {
+        "heading": "Reading the inspector and file signatures",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Many binary formats begin with a fixed byte sequence. The inspector checks the first sixteen bytes against the following list. A match shows the format name as a pill beside the byte count. Anything else shows as unknown."
+          },
+          {
+            "type": "table",
+            "head": ["Format", "Leading bytes (hex)"],
+            "rows": [
+              ["PNG", "`89 50 4E 47 0D 0A 1A 0A`"],
+              ["JPEG", "`FF D8 FF`"],
+              ["GIF", "`47 49 46 38`, which is `GIF8`"],
+              ["PDF", "`25 50 44 46 2D`, which is `%PDF-`"],
+              ["ZIP", "`50 4B 03 04`, which is `PK` plus 3 and 4"],
+              ["GZIP", "`1F 8B 08`"],
+              ["ELF", "`7F 45 4C 46`"],
+              ["WebP", "`52 49 46 46` then `57 45 42 50` at byte 8"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Signature detection is a hint, not validation. A file can begin with valid PNG bytes and be corrupt, and formats such as DOCX, XLSX, JAR and APK are all ZIP containers, so they report as ZIP archive."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Identify unknown bytes from a log",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "A support ticket contains the line `89 50 4E 47 0D 0A 1A 0A 00 00 00 0D`, pasted from a hex dump, and nobody knows what the payload is."
+      },
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Open the inspector tab and paste the line into Or paste hex bytes.",
+          "Press Inspect pasted bytes. The pills show 12 bytes and PNG image, because the first eight bytes are the PNG signature.",
+          "Read the ASCII column. Bytes `50 4E 47` appear as `PNG` between the unprintable lead byte `89` and the CR LF pair, shown as dots.",
+          "Click the byte at offset 0 to see its detail line: `0x89`, decimal 137, binary `10001001`, and unprintable."
+        ]
+      },
+      {
+        "type": "p",
+        "text": "What you learn: the payload is a PNG that was truncated after the header's length field `00 00 00 0D`, which announces a 13-byte IHDR chunk. The stray `89` and the CR LF bytes are deliberate: they let PNG detect text-mode transfers that corrupt line endings. Use Download bytes to save a repaired copy if you extend the paste with the rest of the file."
+      }
+    ]
+  },
+  "limits": [
+    "Files are limited to 512 KB and pasted hex to 100,000 characters in the inspector. For larger files use `xxd`, `hexdump` or a desktop hex editor.",
+    "The inspector is read-only. You can download the bytes it holds but cannot edit individual bytes in place.",
+    "Only eight file signatures are recognised. A different format shows as unknown, even when it is valid.",
+    "Whole-number conversion does not handle fractions or floating-point formats such as IEEE 754, and the bitwise tab expects hexadecimal operands.",
+    "Text conversion is UTF-8 only. For UTF-16, Latin-1 or other encodings, convert them elsewhere first."
+  ],
+  "faq": [
+    {
+      "question": "Why is my hex text not decoding?",
+      "answer": "The digit count must be even and only 0 to 9 and A to F are allowed once separators and `0x` markers are removed. A stray character or an odd number of digits stops decoding with an error."
+    },
+    {
+      "question": "Why do emoji take four bytes?",
+      "answer": "UTF-8 uses up to four bytes for code points above U+FFFF. Emoji such as 👋 are in that range, so each one produces four hex bytes."
+    },
+    {
+      "question": "What does the bit width do?",
+      "answer": "It sets the mask applied to inputs and results, so NOT and shifts stay inside 8, 16, 32, 64 or 128 bits. Negative inputs wrap as two's complement within that width."
+    },
+    {
+      "question": "Is my file uploaded?",
+      "answer": "No. The file is read in your browser with the file API and the bytes are shown locally. Nothing is sent to a server."
+    },
+    {
+      "question": "Why does a DOCX file show as ZIP?",
+      "answer": "Office Open XML, JAR and APK files are ZIP archives with a particular layout. Their first bytes match the ZIP signature, which is the only thing the detector checks."
+    }
+  ]
+}

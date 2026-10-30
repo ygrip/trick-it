@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, mkdtemp, rename, rm, access, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { localePath, siteOrigin, SEO_LOCALES, SOCIAL_CARD_LOCALES } from '../src/lib/seo/metadata.js';
+import { localePath, siteOrigin, INDEXED_LOCALES, SEO_LOCALES, SOCIAL_CARD_LOCALES } from '../src/lib/seo/metadata.js';
 
 const defaultRoot = fileURLToPath(new URL('../', import.meta.url));
 export const OG_WIDTH = 1200;
@@ -75,14 +75,23 @@ function translated(tool, locale) {
   return { ...tool, name: translation?.name ?? tool.name, description: translation?.description ?? tool.description, seo: translation?.seo ?? tool.seo };
 }
 
-/** Publish every generated production route in every host locale.
+/** Slugs of the editorial guides in `content/guides`, sorted for a stable sitemap. */
+export async function guideSlugs(root = defaultRoot) {
+  const names = await readdir(join(root, 'content/guides')).catch(() => []);
+  return names.filter((name) => name.endsWith('.json')).map((name) => name.slice(0, -'.json'.length)).sort();
+}
+
+/** Publish every production route in every indexed locale. English-only guides
+ * are listed once, plus the guide index when any guide exists.
  * `images` (optional) maps `home-<locale>` / `tools/<id>-<locale>` to the social card path. */
-export function sitemapXml(tools, origin, base = '', images = {}) {
+export function sitemapXml(tools, origin, base = '', images = {}, guides = []) {
   origin = siteOrigin(origin);
+  const guideRoutes = guides.length ? ['/guides/', ...guides.map((slug) => `/guides/${slug}/`)] : [];
   const routes = [
-    { path: '/', locales: SEO_LOCALES },
-    ...['privacy', 'terms', 'policy'].map((id) => ({ path: `/${id}/`, locales: SEO_LOCALES })),
-    ...tools.map((tool) => ({ path: `${tool.path}/`, image: `tools/${tool.id}`, locales: SEO_LOCALES }))
+    { path: '/', locales: INDEXED_LOCALES },
+    ...['privacy', 'terms', 'policy'].map((id) => ({ path: `/${id}/`, locales: INDEXED_LOCALES })),
+    ...tools.map((tool) => ({ path: `${tool.path}/`, image: `tools/${tool.id}`, locales: INDEXED_LOCALES })),
+    ...guideRoutes.map((path) => ({ path, locales: ['en'] }))
   ];
   routes[0].image = 'home';
   const entries = origin ? routes.flatMap((route) => route.locales.map((locale) => {
@@ -165,7 +174,7 @@ export async function generateSeo({ root = defaultRoot, origin = process.env.PUB
     await rm(output, { recursive: true, force: true });
     await rename(staging, output);
     await writeFile(join(staticRoot, 'robots.txt'), robotsText(origin, base));
-    await writeFile(join(staticRoot, 'sitemap.xml'), sitemapXml(tools, origin, base, images));
+    await writeFile(join(staticRoot, 'sitemap.xml'), sitemapXml(tools, origin, base, images, await guideSlugs(root)));
     const generated = join(root, 'src/lib/seo');
     await mkdir(generated, { recursive: true });
     await writeFile(join(generated, 'generated.json'), `${JSON.stringify({ origin, base, images, icons }, null, 2)}\n`);

@@ -1,0 +1,153 @@
+{
+  "id": "curl-generator",
+  "updated": "2026-10-30",
+  "about": [
+    "cURL Studio translates a pasted `curl` command into request code for JavaScript (fetch), Python (requests), Go (net/http), Java 11+ (HttpClient), C# (HttpClient), Rust (reqwest, blocking) and PHP (cURL). It also goes the other way: paste a snippet that follows one of those literal request patterns and get the equivalent `curl` command. The usual starting point is a command copied from API documentation or from the browser's network panel, which you then need inside an application.",
+    "The converter works by parsing, not by running anything. The input is tokenised with shell-style quoting rules, mapped to a small request model of method, URL, headers and body, validated, and then rendered by a per-language generator. Nothing is executed, no request is sent and no code you paste is evaluated. The README states that no network access, telemetry or third-party runtime dependency is used.",
+    "That design makes the tool predictable but narrow. It supports the options most API calls actually use and rejects the rest with a specific error rather than producing code that quietly behaves differently from your command. If a snippet comes out, the method, URL, headers and body in it are the ones you gave.",
+    "Before converting, you may want to tidy a JSON body in [JSON Tools](/json-tools/) or check a bearer token in [JWT Trust Lab](/jwt-tools/). Sensitive headers are kept in the output exactly as typed, so redact tokens before sharing a generated snippet."
+  ],
+  "features": [
+    {
+      "title": "Seven target languages",
+      "body": "JavaScript fetch, Python requests, Go net/http, Java HttpClient, C# HttpClient, Rust reqwest and PHP cURL. Each is generated from the same request model so they stay consistent with each other."
+    },
+    {
+      "title": "Reverse conversion for literal requests",
+      "body": "Snippets that match the generator's own request constructs can be turned back into cURL. Variables, computed expressions and unrelated libraries are rejected rather than guessed."
+    },
+    {
+      "title": "Realistic option coverage",
+      "body": "Handles `-X`, `-H`, `-d`, `--data-raw`, `--data-binary`, `--data-urlencode`, `--json`, `--url`, `-A`, `-b`, `-u` and `-I`, including `--option=value` and attached forms such as `-XPOST`. Backslash line continuations are understood."
+    },
+    {
+      "title": "Helpful implied behaviour",
+      "body": "A body without `-X` makes the method POST, as curl does. `--json` adds `Content-Type: application/json` if you did not set one, and `-u user:pass` becomes a Basic Authorization header."
+    },
+    {
+      "title": "Warnings for dropped options",
+      "body": "Flags that do not translate to a snippet, such as `-L`, `-s`, `-k`, `--compressed` and `-i`, produce a visible warning instead of silently disappearing."
+    },
+    {
+      "title": "Input guards",
+      "body": "Input is limited to 100,000 characters, bodies to 64 KiB, headers to 64, and only http and https URLs without embedded credentials are accepted."
+    }
+  ],
+  "reference": {
+    "title": "How a cURL command maps to a request, and what is rejected",
+    "sections": [
+      {
+        "heading": "Parsing rules",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The command must begin with `curl`. Single quotes keep everything literal, double quotes allow backslash escapes for backslash, double quote, dollar sign and backtick, and a backslash at the end of a line joins it with the next, which is how multi-line commands copied from documentation are written. A `#` that starts a word begins a comment."
+          },
+          {
+            "type": "p",
+            "text": "Shell variables and substitutions are refused: `$TOKEN`, `${HOST}`, `$(date)` and backticks all cause an error asking for literal arguments. This matters because the converter cannot know what the shell would have expanded them to, and a wrong guess would give you code that sends a different request."
+          },
+          {
+            "type": "table",
+            "head": ["cURL option", "Effect in the request model"],
+            "rows": [
+              ["`-X`, `--request`", "Sets the method, upper-cased"],
+              ["`-H`, `--header`", "Adds a header; the first colon splits name from value"],
+              ["`-d`, `--data`, `--data-raw`", "Appends to the body; several values are joined with `&`"],
+              ["`--data-binary`", "Sets the body without joining"],
+              ["`--data-urlencode`", "Percent-encodes the value after the first `=`"],
+              ["`--json`", "Sets the body and a default JSON content type"],
+              ["`-u`, `--user`", "Adds `Authorization: Basic` with Base64 of the UTF-8 value"],
+              ["`-A`, `-b`", "Add `User-Agent` and `Cookie` headers"],
+              ["`-I`, `--head`", "Sets the method to HEAD"]
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "What is rejected, and why",
+        "blocks": [
+          {
+            "type": "list",
+            "ordered": false,
+            "items": [
+              "`-d @file` and stdin references: the tool is text-only and cannot read files. `--data-raw` is exempt because it treats `@` literally.",
+              "`-G` or `--get`: moving data into the query string cannot be expressed faithfully in the snippet model.",
+              "Multiple URLs, unknown options and multipart form flags such as `-F`.",
+              "URLs that are not http or https, or that contain a username and password in the authority.",
+              "Header names that contain characters not allowed in HTTP tokens, and header values containing line breaks, which prevents header injection in the generated code."
+            ]
+          },
+          {
+            "type": "note",
+            "text": "Redirect following, TLS verification and compression are client settings, not part of the request. Because `-L`, `-k` and `--compressed` are only warned about, a Python or Go snippet may follow redirects or verify certificates differently from your command. Set those options in your HTTP client explicitly."
+          }
+        ]
+      },
+      {
+        "heading": "Per-language details worth knowing",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Generated strings are escaped for the target language: JSON-style quoting for most, and single-quoted escaping for PHP. Java uses the `java.net.http` client added in Java 11, so older runtimes need a different library. The Rust output uses the blocking reqwest API, which needs its blocking feature enabled in `Cargo.toml`. If you need typed models for the response, generate them from a sample in [POJO to Any](/pojo-to-any/)."
+          },
+          {
+            "type": "p",
+            "text": "Bodies are treated as text. A JSON body is sent as the exact characters you provided, so key order and spacing are preserved, and binary content is not supported."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Turn a documentation example into Python",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Paste this command, which is typical of API documentation, and select Python (requests)."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "curl -X POST 'https://api.example.com/v1/orders' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer REPLACE_ME' \\\n  -d '{\"sku\":\"A1\",\"qty\":2}'"
+      },
+      {
+        "type": "p",
+        "text": "The output contains a requests call with the method POST, the URL, a headers dictionary with both headers and the JSON string as the body. Check three things before copying it: the method matches, the Authorization value is still the placeholder, and the body is exactly the JSON you intended."
+      },
+      {
+        "type": "p",
+        "text": "Now change the command to use `-H \"Authorization: Bearer $TOKEN\"`. The converter stops with the message that shell variables are not supported. Replace `$TOKEN` with a literal value or a clear placeholder, convert, and then swap the placeholder for your environment lookup in code. Adding `-L` would produce the snippet plus a warning that redirect following is not preserved."
+      }
+    ]
+  },
+  "limits": [
+    "Only a subset of cURL is supported. Multipart uploads, file bodies, `-G`, proxies, client certificates, cookies jars, retries and timeouts are not converted.",
+    "Reverse conversion recognises only the literal constructs this tool generates. It is not a code interpreter and will reject loops, variables and helper functions.",
+    "The converter does not send the request. To see the real response, run the generated code or the original command yourself.",
+    "Output contains the headers and tokens you pasted. Review it before sharing or committing it.",
+    "Generated code is a starting point: it has no error handling, retries, timeouts or response parsing."
+  ],
+  "faq": [
+    {
+      "question": "Why does it reject my command with a dollar sign?",
+      "answer": "Variables such as `$TOKEN` are expanded by the shell, and the tool cannot know their values. Replace them with literal text, convert, then substitute your own configuration lookup in the code."
+    },
+    {
+      "question": "Why did my GET become a POST?",
+      "answer": "curl sends POST when a body is supplied with `-d` and no `-X`. The converter follows that rule. Add `-X GET` explicitly if you want a GET with a body."
+    },
+    {
+      "question": "Does the tool call the API?",
+      "answer": "No. It only parses the text and generates code. No request is made and no data is sent anywhere."
+    },
+    {
+      "question": "Are -L, -k and --compressed supported?",
+      "answer": "They are recognised and produce a warning, but they are not included in the generated snippet. Configure redirects, certificate verification and compression in your HTTP client."
+    },
+    {
+      "question": "What about file uploads?",
+      "answer": "File and stdin bodies (`-d @file`) and multipart forms are not supported because the converter is text-only. Use your client library's multipart support directly."
+    }
+  ]
+}

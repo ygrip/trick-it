@@ -1,0 +1,160 @@
+{
+  "id": "who-track-me",
+  "updated": "2026-10-30",
+  "about": [
+    "Who Track Me answers a simple question about any public web page: which third parties does it talk to, and which of them are known tracking, advertising or session-replay services? You paste a URL, choose mobile or desktop and the tool returns a scored evidence report covering third-party requests, tag-manager containers, tracker vendors and the cookies set on the first response.",
+    "It is meant for people who need a quick, evidence-based first look: a site owner checking what a marketing team has added, a developer reviewing a vendor's page before integration, a privacy-minded reader curious about a news site, or a consultant preparing for a deeper cookie-consent review. You do not paste HTML or DevTools output; the audit fetches what it needs.",
+    "Honesty about the network matters here. A page in an isolated browser frame cannot inspect other sites, so this tool is not fully client-side. The URL goes to the Trick-it host service, which reads the page's initial HTML under strict guards, and to Google PageSpeed Insights, whose Lighthouse run loads the page in Google's own browser and records the requests it makes. A compact evidence summary comes back to your tab, and the vendor classification, scoring and exports run locally."
+  ],
+  "features": [
+    {
+      "title": "Known-vendor classification",
+      "body": "Request hosts are matched against a built-in list of 19 tracking hosts covering Google Tag Manager, Google Analytics, DoubleClick, Google Ads, Meta, Microsoft Clarity and Ads, Hotjar, Segment, Mixpanel, Amplitude, TikTok, Criteo, The Trade Desk, New Relic and Sentry. Each is labelled with a type and a risk of low, medium or high."
+    },
+    {
+      "title": "Unknown third parties",
+      "body": "External hosts that are not on the known list are counted as unclassified, so you can see how many other domains the page contacts even when the tool does not recognise them."
+    },
+    {
+      "title": "Initial cookie names",
+      "body": "Lists cookies sent in the first response's `Set-Cookie` headers with SameSite, HttpOnly and Secure flags. Names such as `_ga`, `_fbp`, `_hjid` or `_clck` are tagged with the service they usually belong to. Cookie values are never received."
+    },
+    {
+      "title": "GTM and dataLayer references",
+      "body": "Finds Google Tag Manager container IDs and static references to the dataLayer in the initial HTML. A container ID shows that a container is referenced, not which tags it fires."
+    },
+    {
+      "title": "Scored report with coverage note",
+      "body": "Produces a 0 to 100 score from the observed signals and labels whether the data came from Lighthouse's network capture plus HTML, or from the HTML only because Lighthouse was unavailable."
+    },
+    {
+      "title": "JSON and CSV export",
+      "body": "Download the report locally as JSON or CSV for tickets, audits or comparison over time."
+    }
+  ],
+  "reference": {
+    "title": "How the evidence and the score work",
+    "sections": [
+      {
+        "heading": "Two sources of evidence",
+        "blocks": [
+          {
+            "type": "table",
+            "head": ["Source", "What it can see", "What it cannot see"],
+            "rows": [
+              ["Lighthouse in Google's browser", "Requests the page makes while loading, including scripts, pixels and beacons from third-party hosts", "Pop-ups, consent choices, logins, country-specific behaviour, interactions after load"],
+              ["Bounded read of the initial HTML", "Static script tags, GTM container IDs, dataLayer references in code, `Set-Cookie` names and attributes of the first response", "Live dataLayer event values, cookies set later by JavaScript, third-party cookies, localStorage and sessionStorage"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Your own browser's cookies and storage are never involved; the audit runs from outside. That is why the tool says missing evidence is 'unavailable', not 'safe'."
+          }
+        ]
+      },
+      {
+        "heading": "Scoring",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The score starts at 100 and subtracts a penalty. Each known high-risk vendor costs 17 points, each medium-risk vendor 9 and each low-risk vendor 2. Cookies add a smaller amount: 4 points for each high-risk cookie and 2 for each medium-risk one. The total penalty is capped at 80, so the lowest possible score is 20."
+          },
+          {
+            "type": "table",
+            "head": ["Risk", "Examples in the vendor list", "Points per detection"],
+            "rows": [
+              ["High", "Meta Pixel, TikTok Pixel, Google Ads, DoubleClick, Hotjar, Microsoft Clarity, Criteo, The Trade Desk", "17"],
+              ["Medium", "Google Analytics, Google Tag Manager, Segment, Mixpanel, Amplitude", "9"],
+              ["Low", "Sentry, New Relic (diagnostics)", "2"]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "The score measures observed signals only. It is not a legal assessment under GDPR, ePrivacy, UU PDP or any other law, and a score of 100 does not prove that a page is tracker-free."
+          }
+        ]
+      },
+      {
+        "heading": "Why trackers are rated the way they are",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Advertising pixels and session-replay tools are rated high because they send behavioural data to third parties for profiling or record what visitors do on the page, including form interactions unless masked. Analytics tools are medium: they also collect identifiers and usage data but are commonly first-party in intent. Error-monitoring services are low because they primarily collect diagnostics, although they can still see the URL and device."
+          },
+          {
+            "type": "p",
+            "text": "A tag manager is rated medium because it is a delivery mechanism. The tags inside a container can be added by anyone with access, so a container ID is a pointer to unknown behaviour rather than proof of a specific tracker."
+          }
+        ]
+      },
+      {
+        "heading": "What is sent and what is returned",
+        "blocks": [
+          {
+            "type": "list",
+            "items": [
+              "Sent: the public URL, the mobile or desktop choice and the interface language, plus a Cloudflare Turnstile token. Google receives the URL because it loads the page.",
+              "Guarded read: the host service refuses URLs with credentials, local or private hosts, sensitive query keys and unusual ports, and does not proxy response bodies to the tool.",
+              "Returned: a compact evidence report. The tool never receives raw HTML, cookie values or query strings.",
+              "Limits: four audits per 60 seconds for the audit feature, and results usually take 20 to 90 seconds."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Reviewing a publisher homepage",
+    "blocks": [
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Paste `https://news.acme-studio.dev/` and choose Mobile. Never paste a link with a login token or signed parameters.",
+          "Approve the request to send the URL to Google PageSpeed Insights and the Trick-it service, then complete the security check.",
+          "On the report, read the counters: known trackers, third-party hosts, response cookies and GTM containers. Suppose it shows two Google services, Meta Pixel and Hotjar.",
+          "Check the coverage line. If it says the network snapshot was used, the third-party requests are real observations from Lighthouse; if it says partial HTML-only, the report may be missing late-loading scripts.",
+          "Open the cookie table, spot `_fbp` as high risk, then export JSON for the privacy review."
+        ]
+      },
+      {
+        "type": "p",
+        "text": "With this result the penalty is 17 for Meta Pixel, 17 for Hotjar and 9 for each of two Google services, 52 in total, plus 4 for the `_fbp` cookie, so the score is 44. The next step is to compare the list against the cookie banner: are those services blocked until a visitor consents? This tool cannot test that, so follow up with a manual session or with [HAR Studio](/har-studio/) on a capture you record yourself."
+      }
+    ]
+  },
+  "limits": [
+    "Consent state is not simulated. Lighthouse loads the page as a fresh visitor, so scripts that fire only after accepting or rejecting a banner, or after a login, are not observed.",
+    "Only public pages. URLs with credentials, private hosts, sensitive query parameters or unusual ports are rejected by the host service.",
+    "The vendor list is built in and short. Many real trackers will appear only as unclassified external hosts.",
+    "It reads only the first HTML response and first `Set-Cookie` headers. Cookies and storage written by JavaScript, and live dataLayer values, are out of reach.",
+    "Requires internet access, Google PageSpeed availability and the Trick-it host broker; it cannot run as a standalone file. Rate limits are approximate per IP and Cloudflare location.",
+    "The score is a heuristic and not legal certification."
+  ],
+  "faq": [
+    {
+      "question": "Does Who Track Me read my own cookies or browsing data?",
+      "answer": "No. It analyses a public page from outside, using Google's test browser and a bounded read of the page. Your browser's cookies, storage and history are not accessed."
+    },
+    {
+      "question": "What is sent to external services?",
+      "answer": "The URL you enter is sent to Google PageSpeed Insights and to the Trick-it host service, with a Cloudflare Turnstile verification. Only a compact evidence report comes back; raw HTML, cookie values and query strings are not returned to the tool."
+    },
+    {
+      "question": "Why does it show zero trackers for a site I know has analytics?",
+      "answer": "Tags that load only after consent, after interaction or behind an unrecognised domain will not appear. Zero detections never means tracker-free."
+    },
+    {
+      "question": "What does a GTM container ID tell me?",
+      "answer": "It shows that the page references a Google Tag Manager container. The tags inside may include analytics or ads, but the ID alone does not prove any of them executed."
+    },
+    {
+      "question": "Why did my check take so long or fail?",
+      "answer": "Lighthouse can take 20 to 90 seconds. Failures are usually the rate limit (four audits per minute), a slow or unreachable site or Google's service being unavailable."
+    },
+    {
+      "question": "How do I check the page's links or SEO as well?",
+      "answer": "Use [Link Checker](/link-checker/) for URL safety and [SEO Checker](/seo-checker/) for metadata, headers and Lighthouse scores."
+    }
+  ]
+}

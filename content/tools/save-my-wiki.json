@@ -1,0 +1,157 @@
+{
+  "id": "save-my-wiki",
+  "updated": "2026-10-30",
+  "about": [
+    "Wikipedia has a built-in 'Download as PDF' link, but it offers one format, little control and no way to turn an article into a document you can edit. Save My Wiki takes any public MediaWiki article, such as a Wikipedia page, and exports it as PDF, Word (DOCX), PowerPoint (PPTX), Markdown or plain text, keeping headings, lists, tables, hyperlinks and, optionally, pictures with captions. It is useful for students making revision notes, teachers assembling handouts, researchers keeping an offline copy of a revision and anyone who needs a slide deck from an article.",
+    "The conversion does not happen on a server. The tool asks the Trick-it host to read the article and its pictures from the wiki over HTTPS, using a `wiki-read` capability that sends no credentials, follows no redirects and enforces size limits. The article HTML is then parsed in the sandboxed frame with the browser's `DOMParser`, converted to a block model (headings, paragraphs, lists, tables, images) and written to the chosen format by writers inside the tool. The file is saved through the host's downloads permission.",
+    "An optional concise presentation mode selects key sentences from the article and lays them out as editable slides. It is extractive, not generative: every sentence on a slide is copied verbatim from the article, and a final slide credits the source."
+  ],
+  "features": [
+    {
+      "title": "Five export formats",
+      "body": "PDF with A4 pages, a hidden Unicode text layer so the text stays searchable and selectable, and clickable links. DOCX with real headings, lists, tables, hyperlinks and captioned pictures. PPTX, Markdown and plain text round out the set."
+    },
+    {
+      "title": "Pictures handled locally",
+      "body": "Up to 60 raster pictures (PNG, JPEG, GIF, WebP) are fetched after the article, decoded and re-encoded on a canvas to at most 1400 px on the long side, within an 11 MiB total. SVG and rendered maths images fall back to their alt text. If picture access is refused, exports link to the pictures instead."
+    },
+    {
+      "title": "Concise slide decks",
+      "body": "Turn on the concise presentation option to build between 3 and 200 slides from source sentences, with a table of contents, a final source and attribution slide and four editable themes: Academic, Editorial, Nature and Modern."
+    },
+    {
+      "title": "Section and slide budget",
+      "body": "For PowerPoint, choose headings with checkboxes and set a slide budget (default 50, maximum 200). Estimates use the real slide layout including the cover and contents, and the tool asks you to choose fewer sections or raise the budget rather than silently dropping content."
+    },
+    {
+      "title": "Optional semantic selection",
+      "body": "An enhanced mode can load a MiniLM sentence-embedding model to pick more relevant and diverse sentences. It runs in your browser through WebAssembly, after a one-time download of four SHA-256-verified model files (about 140 MiB)."
+    },
+    {
+      "title": "Any MediaWiki",
+      "body": "Accepts `/wiki/Title`, `index.php?title=` and `index.php/Title` links and tries the usual `api.php` locations, so many non-Wikipedia wikis work as well as long as they allow reads."
+    }
+  ],
+  "reference": {
+    "title": "What each format keeps, and the limits that apply",
+    "sections": [
+      {
+        "heading": "Format comparison",
+        "blocks": [
+          {
+            "type": "table",
+            "head": ["Format", "Strengths", "Trade-off"],
+            "rows": [
+              ["PDF", "Fixed layout, selectable text, clickable links, embedded pictures", "Not editable; encoder lowers picture quality to fit the size cap"],
+              ["DOCX", "Editable in Word, LibreOffice and Google Docs; real heading styles and tables", "Merged table cells become empty cells; infobox styling is simplified"],
+              ["PPTX", "Full-article export or a concise deck with themes, editable text", "A concise deck keeps source sentences only; no new wording is written"],
+              ["Markdown", "Plain text with headings, links, lists, tables and linked pictures", "Pictures are linked, not embedded"],
+              ["Plain text", "Smallest and most portable; aligned tables and picture URLs", "No styling or embedded pictures"]
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Only PowerPoint offers section choice and a slide budget. The other formats always export the whole article."
+          }
+        ]
+      },
+      {
+        "heading": "Safety rules for the address you paste",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The tool accepts only an `https:` address with a normal hostname. It rejects URLs with embedded credentials, an explicit port, IP addresses, hostnames of 200 characters or more, and names ending in localhost, local, internal, test or invalid. The title is decoded, underscores become spaces, and titles over 180 characters or containing control characters are refused."
+          },
+          {
+            "type": "table",
+            "head": ["Limit", "Value"],
+            "rows": [
+              ["Blocks per article", "7,500"],
+              ["Pictures", "60"],
+              ["Characters per text block", "60,000"],
+              ["Table size", "400 rows by 12 columns"],
+              ["Picture long side after re-encoding", "1,400 px"],
+              ["Download size", "16 MiB (host cap)"]
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "How the concise deck picks sentences",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Candidate passages come from paragraphs, lists and quotes of at least 35 characters, up to eight per section and 200 overall. Sentences are scored by keyword relevance after removing English and Indonesian stop words, and with MiniLM enabled by semantic similarity and diversity. The theme is guessed from the title and headings (for example biology and climate terms map to Nature, history terms to Editorial, technology terms to Modern, otherwise Academic) and you can override it."
+          },
+          {
+            "type": "note",
+            "text": "Because slides contain verbatim sentences, quotes and statistics keep their original wording. Check each slide against the article before presenting; an extracted sentence can lose context that the surrounding paragraph provided."
+          }
+        ]
+      },
+      {
+        "heading": "Reuse and attribution",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Wikipedia text is generally available under CC BY-SA, and each picture has its own licence on its file page. The exports carry the source link and revision information, but you remain responsible for attributing and sharing alike when you publish or distribute a derivative."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "From a Wikipedia article to a 12-slide revision deck",
+    "blocks": [
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Paste `https://en.wikipedia.org/wiki/Photosynthesis` and read the article. The tool shows the title, source revision and the number of pictures it found.",
+          "Choose PowerPoint, tick the sections you want (for example the overview, light-dependent reactions and Calvin cycle) and enable the concise presentation.",
+          "Set the slide budget to 12. If your selection would need more, the planner tells you to choose fewer sections or raise the budget.",
+          "Leave the theme on Automatic; the title matches biology terms so it picks Nature. Switch to Modern if you prefer.",
+          "Export. Open the file in PowerPoint, Keynote or [PDF Tools](/pdf-tools/)-compatible viewers after exporting a PDF copy, and edit the slides as normal text."
+        ]
+      },
+      {
+        "type": "p",
+        "text": "If the downloaded PDF would exceed 16 MiB, the PDF writer retries with lower picture quality, then suggests Word, plain text or turning pictures off. Plain text from the same article is a few hundred kilobytes at most because it contains no images."
+      }
+    ]
+  },
+  "limits": [
+    "Wikis that do not allow cross-origin or public API reads cannot be converted. Private or login-protected wikis are out of reach by design, since requests never carry credentials.",
+    "Downloads above 16 MiB fail. Turn pictures off or pick a lighter format for image-heavy articles.",
+    "SVG diagrams and rendered maths are not embedded. They appear as alt text or links.",
+    "Complex wiki formatting is simplified. Merged table cells become empty cells, infoboxes lose their styling and very large tables are capped.",
+    "The concise deck is extractive. It will not summarise or rephrase, and its quality depends on how well the article is structured.",
+    "The optional MiniLM mode needs about 140 MiB of one-time download and a browser with WebAssembly support."
+  ],
+  "faq": [
+    {
+      "question": "Does Save My Wiki upload the article to a conversion server?",
+      "answer": "No. The host fetches the article and pictures from the wiki, and every conversion step runs inside your browser. The only network traffic is to the wiki itself (through the host) and, if you enable it, the one-time model download."
+    },
+    {
+      "question": "Which wikis work?",
+      "answer": "Public Wikipedia pages and other MediaWiki sites served over HTTPS that allow public reads. Pages behind logins, non-standard ports and IP-address hosts are rejected."
+    },
+    {
+      "question": "Why are some pictures missing?",
+      "answer": "Only PNG, JPEG, GIF and WebP are embedded, up to 60 pictures. SVG and maths images are replaced by text, and a refusal of picture access makes the exports link to the pictures instead."
+    },
+    {
+      "question": "Is the PowerPoint written by AI?",
+      "answer": "No. The concise deck selects existing sentences from the article using keyword scoring and, optionally, a local embedding model. It does not generate new text."
+    },
+    {
+      "question": "Can I compress or merge the PDF afterwards?",
+      "answer": "Yes. Open the exported file in [PDF Tools](/pdf-tools/) to merge, split or reorder pages, and use [Image Compression](/image-compression/) if you need smaller source pictures."
+    },
+    {
+      "question": "Can I reuse the content?",
+      "answer": "Wikipedia text is released under CC BY-SA, and pictures carry individual licences. Keep the attribution that the export includes and check each picture's licence before republishing."
+    }
+  ]
+}

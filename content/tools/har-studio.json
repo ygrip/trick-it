@@ -1,0 +1,193 @@
+{
+  "id": "har-studio",
+  "updated": "2026-10-30",
+  "about": [
+    "A HAR file is a JSON snapshot of everything a browser or proxy did on the network during a page load: every request, response, header, cookie, cache hint and a breakdown of how long each phase took. Reading one as raw JSON is painful, since a single page can contain hundreds of entries with thousands of lines each. HAR Studio turns that file into a dashboard: a summary of requests, bytes and errors, charts by status, type and domain, a request waterfall, a sortable table and a per-request inspector.",
+    "It is aimed at front-end developers chasing slow page loads, support engineers who receive a HAR from a customer and need to see what failed, and QA staff who want proof of which call returned a 500. The parser expects the HAR 1.2 shape, meaning a top-level `log` object with an `entries` array, which is what Chrome, Edge, Firefox, Safari and proxies such as Charles or Fiddler export.",
+    "The file is read and parsed in your browser tab. The tool makes no network calls and loads no third-party assets, so a capture that contains session cookies or bearer tokens is not sent anywhere. On top of that, values whose names look sensitive are hidden by default, so you can screenshot or share your screen without leaking credentials by accident."
+  ],
+  "features": [
+    {
+      "title": "Request waterfall",
+      "body": "Each request is drawn as a bar positioned by its start offset from the earliest request, split into phases: blocked, DNS, connect, SSL, send, wait and receive, plus an 'other' segment when the recorded total is larger than the phases add up to."
+    },
+    {
+      "title": "Searchable, filterable table",
+      "body": "Search matches the redacted URL, method, host and MIME type. Filter by status class (all, errors, 2xx, 3xx) and by resource type, and sort by start time, slowest, largest or status. The table shows 100 rows at a time to stay responsive."
+    },
+    {
+      "title": "Aggregate charts",
+      "body": "Requests are grouped by status class (2xx, 3xx, 4xx, 5xx or 'No response'), resource type, method, domain count and transferred bytes per domain, so the heaviest third party stands out immediately."
+    },
+    {
+      "title": "Sensitive-value masking",
+      "body": "Names matching authorization, cookie, token, secret, password, api key, session, credential, csrf, xsrf or signature are shown as `[hidden]` in headers, query strings and cookies. URL credentials (user:password@) are stripped. A switch reveals the real values when you need them."
+    },
+    {
+      "title": "Request and response inspector",
+      "body": "Select a row to see headers, query parameters, cookies, cache information, timings and a body preview. The raw JSON tab is blocked until you reveal sensitive values, and raw output is truncated at 45,000 characters."
+    },
+    {
+      "title": "CSV export",
+      "body": "The rows currently shown can be exported as har-studio-requests.csv with columns number, method, status, type, domain, url (redacted), bytes, duration_ms and start_ms. Cells starting with =, +, - or @ are prefixed with an apostrophe so spreadsheets do not execute them as formulas."
+    }
+  ],
+  "reference": {
+    "title": "How HAR Studio reads a capture",
+    "sections": [
+      {
+        "heading": "Fields the parser relies on",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Validation is deliberately small. The file must contain `log.entries` as an array, otherwise the tool reports 'Invalid HAR: expected log.entries array.' Individual entries that lack a `request`, a `response` or a string `request.url` are skipped and counted as omitted rather than aborting the whole import, which matters for captures that were truncated or edited by hand."
+          },
+          {
+            "type": "table",
+            "head": [
+              "Derived value",
+              "Where it comes from"
+            ],
+            "rows": [
+              [
+                "Duration",
+                "`entry.time` if it is a non-negative number, otherwise the sum of blocked, dns, connect, send, wait and receive"
+              ],
+              [
+                "Start offset",
+                "`startedDateTime` minus the earliest start in the file; entries without a valid date are placed after the previous one"
+              ],
+              [
+                "Transfer size",
+                "`_transferSize` on the response or entry if present, else `bodySize + headersSize`, else `content.size + headersSize`"
+              ],
+              [
+                "Resource type",
+                "Chrome's `_resourceType` first, then MIME type, then file extension in the URL"
+              ],
+              [
+                "Host and path",
+                "Parsed from `request.url`; if parsing fails the host is shown as 'Unknown'"
+              ]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "Chrome records `-1` for sizes and timings it does not know. The parser treats negative or non-numeric values as zero, so a missing phase simply does not appear in the waterfall instead of producing a negative bar."
+          }
+        ]
+      },
+      {
+        "heading": "Resource type classification",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Types are assigned in a fixed order, so the first match wins. This explains why a JSON response is always labelled API even when it is requested as a script or a document."
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "API: resource type xhr or fetch, or a MIME type containing json or graphql",
+              "Document: resource type document, or MIME containing html",
+              "Script: resource type script, or MIME containing javascript",
+              "CSS: resource type stylesheet, or MIME containing css",
+              "Image: resource type image, an image/ MIME, or a URL ending in png, jpg, jpeg, gif, webp, svg or ico",
+              "Font: resource type font, MIME containing font, or woff, ttf, otf",
+              "Media: video or audio MIME types; everything else is Other"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Summary metrics",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The headline numbers come from a single pass over the parsed entries. Errors are requests with status 0 (no response, typically blocked, cancelled or failed DNS) or 400 and above. Slow requests are those taking one second or longer. The average is the arithmetic mean of durations and the p95 is the value at the 95th-percentile position of the sorted durations (nearest-rank, no interpolation)."
+          },
+          {
+            "type": "p",
+            "text": "Phase totals add each timing field across all entries. The waterfall splits `connect` so that TLS time is not counted twice: HAR defines `connect` as including `ssl`, so the tool draws `connect - ssl` as the TCP part and `ssl` as its own segment."
+          }
+        ]
+      },
+      {
+        "heading": "Capturing a good HAR",
+        "blocks": [
+          {
+            "type": "list",
+            "items": [
+              "In Chrome or Edge DevTools open Network, tick Preserve log and Disable cache if you want a cold load, reproduce the problem, then use Export HAR (sanitized or with content).",
+              "In Firefox use the gear menu in the Network panel and choose Save All As HAR.",
+              "Close other tabs first: extensions and background tabs add noise that makes domain charts misleading.",
+              "Use the 'sanitized' export option where your browser offers it, but remember HAR Studio will still hide sensitive names on screen."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Finding why a checkout page feels slow",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Suppose a customer says checkout hangs for several seconds and sends a 6 MB HAR. Drop it into HAR Studio and work down the page."
+      },
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Read the summary row. If errors is greater than zero, set the status filter to Errors and look at the paths and status codes before anything else.",
+          "Set sort to Slowest. A request with a long `wait` segment points to a slow server response; a long `blocked` segment points to browser connection limits or a queued request; a long `receive` segment points to a large payload.",
+          "Open the domain chart. If a single analytics or tag-manager host owns most of the bytes, that is a candidate for deferral.",
+          "Select the slowest API request and open the inspector. Check the request headers and cache fields to see whether a `Cache-Control` header is missing.",
+          "Press the CSV export to attach the filtered list to the ticket."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "json",
+        "code": "{\n  \"startedDateTime\": \"2026-03-02T09:14:07.123Z\",\n  \"time\": 2310.4,\n  \"request\": { \"method\": \"POST\", \"url\": \"https://api.shop.example/v1/cart/pay?token=abc123\" },\n  \"response\": { \"status\": 504, \"bodySize\": 0, \"headersSize\": 311 },\n  \"timings\": { \"blocked\": 4, \"dns\": 0, \"connect\": 0, \"send\": 1, \"wait\": 2300, \"receive\": 5 }\n}"
+      },
+      {
+        "type": "p",
+        "text": "This entry would appear in the Errors filter as a 5xx, with the query value shown as `token=[hidden]` and a waterfall bar dominated by the wait phase: the server took 2.3 seconds and then timed out, so the fix belongs on the backend, not in the front end."
+      }
+    ]
+  },
+  "limits": [
+    "Files above 64 MiB are rejected to protect browser memory. Re-export with 'omit content' or capture a shorter session.",
+    "Only HAR 1.2 style JSON is parsed. Files that are not JSON, or JSON without `log.entries`, fail with an error.",
+    "Waterfall accuracy is limited by what the capturing tool recorded. HAR does not store request initiators or WebSocket frames in a standard way, so those are not shown.",
+    "Masking is name-based. A secret stored under an innocent name such as `x-custom` or inside a response body is not detected, so review the capture before sharing it.",
+    "Request-body and response-body previews are truncated for display, so use the original file when you need the entire payload."
+  ],
+  "faq": [
+    {
+      "question": "Is my HAR file uploaded anywhere?",
+      "answer": "No. The file is read and parsed in your browser, and the tool makes no network calls. Downloads such as CSV go through the browser only after you press the button."
+    },
+    {
+      "question": "Why are some header values shown as [hidden]?",
+      "answer": "Any header, cookie or query parameter whose name matches words such as authorization, token, password, session or csrf is masked by default. Switch on 'Reveal sensitive values' to display them."
+    },
+    {
+      "question": "Why does the tool say some entries were omitted?",
+      "answer": "Entries without a request, a response or a string URL cannot be analysed, so they are skipped and counted. This usually means the capture was cut off or edited."
+    },
+    {
+      "question": "What does a status of 0 mean?",
+      "answer": "The browser recorded no response for that request. Typical causes are a blocked request (ad blocker, CORS, mixed content), a cancelled navigation or a DNS or connection failure. The tool counts these as errors and groups them under 'No response'."
+    },
+    {
+      "question": "Can I open a HAR with a .json extension?",
+      "answer": "Yes. The file picker accepts .har and .json files, so long as the content has the HAR structure with `log.entries`."
+    },
+    {
+      "question": "Where can I inspect the JSON bodies I find?",
+      "answer": "Copy a body from the inspector and paste it into [JSON Tools](/json-tools/) for formatting, or decode a token header with [JWT Tools](/jwt-tools/)."
+    }
+  ]
+}

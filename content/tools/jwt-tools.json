@@ -1,0 +1,164 @@
+{
+  "id": "jwt-tools",
+  "updated": "2026-10-30",
+  "about": [
+    "JWT Trust Lab answers two separate questions about a JSON Web Token: is its signature valid for a secret you supply, and would your API accept its claims right now? Most online decoders blur those into one green tick. Here they are independent results, because a token can carry a perfectly valid signature and still be expired, aimed at another audience or issued by someone you do not trust.",
+    "You paste a compact signed token (a JWS with three dot-separated parts, optionally prefixed with `Bearer `). The tool decodes the header and claims, lists findings against an acceptance policy you configure, draws a timeline of issued, active, simulated-now and expiry times, and can verify HS256, HS384 or HS512 signatures against a local secret.",
+    "It runs entirely in the page. The README states there is no network access, telemetry, storage or third-party dependency, and the secret field is labelled as not saved. Verification uses WebCrypto when it is available. Inside the opaque-origin sandbox it falls back to a built-in SHA-2 HMAC implementation, which compares signatures with a constant-time loop.",
+    "It is a diagnostic aid, not authentication middleware. It does not verify RSA or ECDSA signatures, fetch JWKS documents or decrypt tokens. For turning individual segments into text by hand, [Encoder / Decoder](/encoder-decoder/) handles Base64URL, and [JSON Tools](/json-tools/) will pretty-print the decoded payload."
+  ],
+  "features": [
+    {
+      "title": "Decode without trusting",
+      "body": "Header and claims are decoded from Base64URL, parsed as UTF-8 JSON objects and shown as highlighted JSON. The status line reminds you that decoding is not authentication."
+    },
+    {
+      "title": "Explicit expected algorithm",
+      "body": "Verification needs you to pick HS256, HS384 or HS512 first. If the token header names a different algorithm the tool reports an algorithm mismatch instead of trusting the header, which is the habit that defeats algorithm-confusion attacks."
+    },
+    {
+      "title": "Acceptance policy",
+      "body": "Optionally enter an expected issuer and audience. The audience check accepts a string `aud` or an array that contains your value. Clock tolerance runs from 0 to 600 seconds and defaults to 30."
+    },
+    {
+      "title": "Time travel",
+      "body": "A simulated clock offset of plus or minus 10,080 minutes (seven days) shifts the tool's idea of now. You can see whether a token will expire tomorrow, or why one fails on a server with a skewed clock."
+    },
+    {
+      "title": "Header risk warnings",
+      "body": "Warnings fire for `jku` and `x5u` remote key URLs, an embedded `jwk`, and `crit` or `b64: false` extensions, all of which change how a verifier finds keys or reads the payload."
+    },
+    {
+      "title": "Safe demo token",
+      "body": "Load safe demo builds and signs a fresh HS256 token with the fixed secret `demo-only-not-production` and a 15-minute lifetime, so you can try every control without handling a real credential."
+    }
+  ],
+  "reference": {
+    "title": "What the checks mean and how a JWT is validated",
+    "sections": [
+      {
+        "heading": "Token structure",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "A compact JWS (RFC 7515) is `header.payload.signature`, each part Base64URL-encoded without padding. The signature covers the ASCII bytes of the first two parts joined by a dot. JWTs (RFC 7519) are JWS or JWE tokens whose payload is a JSON object of claims. A JWE has five parts and is encrypted, so the tool rejects it with a specific message instead of showing garbage."
+          },
+          {
+            "type": "p",
+            "text": "Parsing is strict. Input over 32,768 characters is refused. Segments must use only the Base64URL alphabet and cannot have a length that leaves a single stray character. The header and payload must decode as UTF-8 and parse as JSON objects, not arrays or scalars."
+          },
+          {
+            "type": "code",
+            "language": "json",
+            "code": "{\n  \"iss\": \"https://demo.example\",\n  \"aud\": \"trick-it-demo\",\n  \"sub\": \"demo-user\",\n  \"iat\": 1760000000,\n  \"nbf\": 1760000000,\n  \"exp\": 1760000900\n}"
+          }
+        ]
+      },
+      {
+        "heading": "Claim and header findings",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Findings are graded fail, warn or pass. The decision line says the claim policy rejected the token if any finding is a fail. Warnings do not change that decision."
+          },
+          {
+            "type": "table",
+            "head": ["Check", "Severity", "Condition"],
+            "rows": [
+              ["Unsigned", "fail", "`alg` is missing or `none`"],
+              ["Missing signature", "fail", "Third segment is empty"],
+              ["Expired", "fail", "now is at or past `exp` plus tolerance"],
+              ["Not yet valid", "fail", "now plus tolerance is before `nbf`"],
+              ["Issued in the future", "fail", "now plus tolerance is before `iat`"],
+              ["Invalid date", "fail", "`exp`, `nbf` or `iat` is not a non-negative safe integer"],
+              ["Issuer or audience mismatch", "fail", "Value differs from the policy fields you filled in"],
+              ["No `exp`", "warn", "Token never expires"],
+              ["Long lifetime", "warn", "`exp` minus `iat` exceeds 86,400 seconds"],
+              ["Unsupported algorithm", "warn", "`alg` is not HS256, HS384 or HS512"]
+            ]
+          },
+          {
+            "type": "note",
+            "text": "Dates must be NumericDate values: whole seconds since 1970. A millisecond timestamp such as 1760000000000 is a valid integer, so the tool will not flag it as malformed. It will show a date tens of thousands of years away on the timeline and the token will look unexpired. Check magnitude when a lifetime looks absurd."
+          }
+        ]
+      },
+      {
+        "heading": "Signature verification rules",
+        "blocks": [
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "Choose the algorithm your API expects, not the one in the token.",
+              "The tool rejects the run if the header `alg` differs from your choice.",
+              "A secret is required. An empty signature segment returns not verified.",
+              "The HMAC is computed over `header.payload` using the secret's UTF-8 bytes and compared with the decoded signature."
+            ]
+          },
+          {
+            "type": "p",
+            "text": "RFC 8725 (JWT Best Current Practices) recommends exactly this: the verifier decides the algorithm from configuration, never from attacker-controlled input. The `none` algorithm and HMAC-with-public-key confusion are the classic failures it prevents."
+          },
+          {
+            "type": "p",
+            "text": "Changing the token, secret or algorithm cancels any verification still in flight, so a late WebCrypto result can never label a different token as verified. HMAC secrets should be at least as long as the hash output (32, 48 or 64 bytes) for the algorithm to deliver its full strength."
+          }
+        ]
+      }
+    ]
+  },
+  "example": {
+    "title": "Find out why an API returns 401 for a token that verifies",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Scenario: your service rejects a token that looks fine. Start with the safe demo to learn the layout, then repeat the steps with your own non-production token."
+      },
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Press Load safe demo. The token, the secret `demo-only-not-production`, issuer `https://demo.example` and audience `trick-it-demo` are filled in and the token is inspected.",
+          "Read the decision line. It should say claim checks passed, with a timeline showing issued and active at the same instant and expiry 15 minutes later.",
+          "Press Verify signature with HS256 selected. The status becomes HMAC signature verified.",
+          "Set Simulated clock offset to 20. This pretends it is 20 minutes later, and the decision changes to rejected with an expired finding, even though the signature is still valid.",
+          "Change Expected audience to `billing-api`. An audience mismatch finding appears. Restore the offset to 0 and the mismatch is now the only failure."
+        ]
+      },
+      {
+        "type": "p",
+        "text": "What to take away: the signature stayed verified through steps 4 and 5 while the claim policy failed. A 401 on a validly signed token almost always comes from `exp`, `nbf`, `aud` or `iss`. Compare the server's clock with the timeline, then raise tolerance only as far as your server's configured leeway."
+      }
+    ]
+  },
+  "limits": [
+    "Only HMAC (HS256, HS384, HS512) signatures can be verified. RS256, ES256, PS256 and EdDSA tokens can be decoded and their claims checked, but not authenticated.",
+    "No JWKS fetching, key rotation handling or `kid` lookup: the tool never performs network requests.",
+    "Encrypted five-part JWE tokens are rejected, and detached or unencoded payloads (`b64: false`) are not supported beyond a warning.",
+    "Do not paste production signing secrets into any web page. Use a throwaway secret or the demo, and verify production tokens with your server library.",
+    "Claim checks cover `exp`, `nbf`, `iat`, `iss` and `aud` only. Custom claims, scopes and `sub` are displayed, not evaluated."
+  ],
+  "faq": [
+    {
+      "question": "Is it safe to paste a real JWT here?",
+      "answer": "The tool does not transmit tokens or store them, but a live token is still a bearer credential. Prefer expired or non-production tokens, and never enter a production signing secret."
+    },
+    {
+      "question": "Why does decoding not prove a token is genuine?",
+      "answer": "The header and payload are only encoded, not encrypted or signed in themselves. Anyone can write a token with any claims, so trust comes from verifying the signature with a key you control."
+    },
+    {
+      "question": "Why must I choose the algorithm myself?",
+      "answer": "If a verifier believed the token's own `alg` header, an attacker could request `none` or switch algorithms. Fixing the expected algorithm in configuration, as RFC 8725 advises, closes that gap."
+    },
+    {
+      "question": "What does clock tolerance do?",
+      "answer": "It widens the time checks by up to 600 seconds to absorb clock drift between servers. It is added to `exp` and applied to both `nbf` and `iat`. The default is 30 seconds."
+    },
+    {
+      "question": "Why is a RS256 token not verified?",
+      "answer": "Asymmetric verification needs a public key or JWKS and the tool supports HMAC only. Decode and claim checks still work, and the algorithm shows as unsupported for verification."
+    }
+  ]
+}
