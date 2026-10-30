@@ -10,6 +10,14 @@ This is unfinished, unreviewed work. Do not merge or deploy the host changes unt
 - `seo-checker` branch `feat/assessment-export`, PR #3, contains the separate JSON/XML assessment download. Its latest reported checks: 33 unit and 19 browser tests passed before this handoff; rerun after further changes. It still needs its own 12-language article, based on the export feature after coordinating the branches.
 - Atlas work is tracked separately in `ygrip/atlas-nusantara` PR #17 and its own `docs/EDITORIAL_CONTINUATION.md`.
 
+## Tool pull requests
+
+- [JSON Tools #7](https://github.com/ygrip/json-tools/pull/7), [JWT Tools #5](https://github.com/ygrip/jwt-tools/pull/5), [Protobuf Studio #5](https://github.com/ygrip/protobuf-studio/pull/5)
+- [POJO to Any #7](https://github.com/ygrip/pojo-to-any/pull/7), [CSV Tools #4](https://github.com/ygrip/csv-tools/pull/4), [Hex Tools #5](https://github.com/ygrip/hex-tools/pull/5)
+- [Cron Planner #3](https://github.com/ygrip/cron-planner/pull/3) (scaffolding only), [SEO Checker #3](https://github.com/ygrip/seo-checker/pull/3) (assessment export, article still needed)
+
+These are open WIP PRs, not GitHub drafts; the connector cannot convert them to draft. Do not merge without completing the reviews and checks above.
+
 ## Next actions
 
 1. Review the six tool PRs and their source-backed claims, generated manifest diffs, exact release bytes and per-locale output. Validate examples and privacy statements against the actual tool, not another draft. Arrange native review; do not label translations verified merely because keys match.
