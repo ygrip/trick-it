@@ -2,9 +2,9 @@
 
 ## Status: unfinished; do not deploy this branch
 
-The goal is to make both `tools.readynaz.com` (this repository) and `nusantara.readynaz.com` (`ygrip/nusantara`) useful, indexable, and eligible for AdSense. The user wants host-owned tool content and, for the atlas, guides, an about page, key features, a technical reference, and FAQs. Do not claim any change guarantees approval.
+The goal is to make both `tools.readynaz.com` (this repository) and `nusantara.readynaz.com` (`ygrip/atlas-nusantara`, formerly `ygrip/nusantara`) useful, indexable, and eligible for AdSense. The user wants host-owned tool content and, for the atlas, guides, an about page, key features, a technical reference, and FAQs. Do not claim any change guarantees approval.
 
-This branch contains **unreviewed work in progress**, not a deployable solution. The companion branch `feat/editorial-content-adsense` in `ygrip/nusantara` contains incomplete work; it is not a PR and must be independently reviewed and completed. Neither branch is production-verified. Preserve existing work and any unrelated local changes when resuming.
+This branch contains **unreviewed work in progress**, not a deployable solution. The companion branch `feat/editorial-content-adsense` in `ygrip/atlas-nusantara` contains incomplete work; it is not a PR and must be independently reviewed and completed. Neither branch is production-verified. Preserve existing work and any unrelated local changes when resuming.
 
 ## Important corrections
 
@@ -33,4 +33,4 @@ This branch contains **unreviewed work in progress**, not a deployable solution.
 
 ## Pull request expectations
 
-Keep this PR draft until the tool work is complete and independently verified. Open a separate draft or reviewable PR for `ygrip/nusantara` using the `github-ygrip` Punakawan connector. Describe exact evidence, unresolved editorial review, and deployment dependencies. Never include credentials, personal tax identifiers, temporary assets, or unreviewed unrelated files.
+Keep this PR draft until the tool work is complete and independently verified. Open a separate draft or reviewable PR for `ygrip/atlas-nusantara` using the `github-ygrip` Punakawan connector. Describe exact evidence, unresolved editorial review, and deployment dependencies. Never include credentials, personal tax identifiers, temporary assets, or unreviewed unrelated files.
