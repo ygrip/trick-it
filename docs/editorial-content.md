@@ -1,5 +1,7 @@
 # Editorial content: tool articles and guides
 
+> **Superseded ownership proposal:** The user now requires tool-specific guidelines and content in each tool's own repository, localized into all 12 supported languages with Paraglide JS. The host-owned JSON format below is an unfinished draft, not the required final architecture. See [adsense-continuation.md](adsense-continuation.md) before implementing.
+
 Every tool page renders a host-authored article below the running tool. Long-form guides live at `/guides/<slug>/`. Content is plain JSON in `content/`, validated by `node scripts/validate-content.mjs` (the build runs it with `--require-all`, so every catalog tool needs an article).
 
 Why: a tool UI with a two-line description is a thin page to search engines and ad reviewers. The article explains what the tool does, how it behaves, where it breaks and how to use it, written from the tool's actual source.
