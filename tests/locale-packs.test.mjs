@@ -111,7 +111,7 @@ test('registry sync stages exact pack bytes, removes stale packs, and leaves the
     for (const folder of ['scripts', 'src/lib/registry', 'config/tools', 'examples/locale-fixture/dist/locales']) {
       await mkdir(join(root, folder), { recursive: true });
     }
-    for (const path of ['scripts/sync-tools.mjs', 'scripts/verify-registry-snapshot.mjs', 'scripts/lib', 'src/lib/languages.js', 'src/lib/registry/contract.js', 'src/lib/registry/locale-packs.js']) {
+    for (const path of ['scripts/sync-tools.mjs', 'scripts/verify-registry-snapshot.mjs', 'scripts/lib', 'src/lib/languages.js', 'src/lib/registry/contract.js', 'src/lib/registry/locale-packs.js', 'src/lib/registry/article.js']) {
       await cp(join(host, path), join(root, path), { recursive: true });
     }
     await writeFile(join(root, 'package.json'), '{"type":"module"}');

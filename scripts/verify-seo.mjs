@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
-import { localePath, INDEXED_LOCALES, siteOrigin } from '../src/lib/seo/metadata.js';
-import { sitemapXml, robotsText, productionOrigin, guideSlugs } from './generate-seo.mjs';
+import { localePath, toolIndexedLocales, SEO_LOCALES, siteOrigin } from '../src/lib/seo/metadata.js';
+import { sitemapXml, robotsText, productionOrigin } from './generate-seo.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 
@@ -19,7 +19,6 @@ export async function verifySeoBuild({ root = projectRoot, requireProduction = f
   ]);
   const origin = siteOrigin(metadata.origin);
   const base = metadata.base ?? '';
-  const guides = await guideSlugs(root);
 
   if (requireProduction) {
     const deployedOrigin = await productionOrigin(root);
@@ -27,7 +26,7 @@ export async function verifySeoBuild({ root = projectRoot, requireProduction = f
     assert.equal(origin, deployedOrigin, 'Production SEO: PUBLIC_SITE_URL must match the configured custom domain');
   }
 
-  assert.equal(sitemap, sitemapXml(tools, origin, base, metadata.images, guides), 'Published sitemap does not match the verified registry');
+  assert.equal(sitemap, sitemapXml(tools, origin, base, metadata.images), 'Published sitemap does not match the verified registry');
   assert.equal(robots, robotsText(origin, base), 'Published robots.txt disagrees with sitemap / origin');
 
   if (!origin) {
@@ -37,13 +36,13 @@ export async function verifySeoBuild({ root = projectRoot, requireProduction = f
   }
 
   const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-  for (const locale of INDEXED_LOCALES) {
+  for (const locale of SEO_LOCALES) {
     for (const path of ['/', '/privacy/', '/terms/', '/policy/']) {
       assert.ok(urls.includes(`${origin}${localePath(path, locale, base)}`), `Production sitemap is missing ${locale} ${path}`);
     }
   }
-  const guidePages = guides.length ? guides.length + 1 : 0;
-  assert.equal(urls.length, INDEXED_LOCALES.length * (4 + tools.length) + guidePages, 'Production sitemap must include every host and tool route in every indexed locale, plus guides');
+  const expectedTools = tools.reduce((total, tool) => total + toolIndexedLocales(tool).length, 0);
+  assert.equal(urls.length, SEO_LOCALES.length * 4 + expectedTools, 'Production sitemap must include every host route in every locale and each tool in its indexed locales');
   assert.equal(new Set(urls).size, urls.length, 'Sitemap contains duplicate page URLs');
 
   // A URL is not indexable if the corresponding HTML never made it into the build.

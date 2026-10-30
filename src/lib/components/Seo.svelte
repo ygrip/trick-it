@@ -3,7 +3,7 @@
   import config from '$lib/seo/generated.json';
   import { seoMetadata, safeJsonLd } from '$lib/seo/metadata.js';
 
-  let { title, description, path, image, keywords = [], robots = 'index', tool, locale }: {
+  let { title, description, path, image, keywords = [], robots = 'index', tool, locale, indexedLocales }: {
     title: string;
     description: string;
     path: string;
@@ -12,13 +12,15 @@
     robots?: 'index' | 'noindex';
     tool?: { id: string; name: string; version: string; category: string; description?: string; locales?: string[]; capabilities?: string[]; addedAt?: string };
     locale?: Locale;
+    /** Locales in which this page is indexed; omit to index every locale. */
+    indexedLocales?: string[];
   } = $props();
   const generatedImages: Record<string, string> = config.images;
   const language = $derived(locale ?? getLocale());
   const socialImage = $derived(image ?? generatedImages[`${tool ? `tools/${tool.id}` : 'home'}-${language}`] ?? generatedImages[`${tool ? `tools/${tool.id}` : 'home'}-en`]);
   const toolIcons: Record<string, string> = (config as { icons?: Record<string, string> }).icons ?? {};
   const toolIcon = $derived(tool ? toolIcons[tool.id] : undefined);
-  const metadata = $derived(seoMetadata({ title, description, path, image: socialImage, keywords, robots, tool, locale: language, origin: config.origin, base: config.base }));
+  const metadata = $derived(seoMetadata({ title, description, path, image: socialImage, keywords, robots, tool, locale: language, indexedLocales, origin: config.origin, base: config.base }));
 </script>
 
 <svelte:head>

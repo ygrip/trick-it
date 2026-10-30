@@ -3,14 +3,19 @@ import { isSupportedLanguage, languageCodes, stripLanguagePrefix } from '../lang
 export const SEO_LOCALES = [...languageCodes];
 // Bundled social-card fonts currently cover the reviewed English/Indonesian art.
 export const SOCIAL_CARD_LOCALES = ['en', 'id'];
-// Only locales with full editorial content (tool articles, guides) are indexed.
-// Other translations stay usable but render `noindex,follow`, leave the sitemap
-// and serve no ads, so near-duplicate UI translations are not judged as thin pages.
-export const INDEXED_LOCALES = ['en'];
 
-/** @param {string} locale */
-export function isIndexedLocale(locale) {
-  return INDEXED_LOCALES.includes(locale);
+/**
+ * Locales in which a tool page is indexed. English is always indexed; a translation is
+ * indexed only when the tool itself ships a localized article (tool-owned, written with
+ * Paraglide JS). Other translations stay usable but render `noindex,follow`, are left out
+ * of the sitemap and hreflang set, and serve no ads, so a translated UI shell is never
+ * published as a thin duplicate of the English page.
+ * @param {{ translations?: Record<string, { article?: unknown }> } | undefined} tool
+ * @returns {string[]}
+ */
+export function toolIndexedLocales(tool) {
+  const localized = SEO_LOCALES.filter((locale) => locale !== 'en' && Boolean(tool?.translations?.[locale]?.article));
+  return ['en', ...localized];
 }
 
 /** @param {string | undefined} value */
@@ -49,9 +54,9 @@ export function safeJsonLd(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
-/** Previews hide everything; production translations without editorial content stay crawlable but unindexed.
+/** Previews hide everything; production locales without editorial content stay crawlable but unindexed.
  * @param {string} origin @param {boolean} indexable */
-function indexableRobots(origin, indexable) {
+function indexingDirective(origin, indexable) {
   if (!origin) return 'noindex,nofollow';
   if (!indexable) return 'noindex,follow';
   return 'index,follow';
@@ -60,7 +65,8 @@ function indexableRobots(origin, indexable) {
 /** @typedef {{id:string,name:string,version:string,category:string,description?:string,locales?:string[],capabilities?:string[],addedAt?:string}} SeoTool */
 
 const applicationCategories = /** @type {Record<string, string>} */ ({ developer: 'DeveloperApplication', media: 'MultimediaApplication', data: 'BusinessApplication', productivity: 'UtilitiesApplication' });
-/** @param {{title:string,description:string,path:string,locale?:string,origin?:string,base?:string,image?:string,keywords?:string[],robots?:string,tool?:SeoTool}} options */
+/** `indexedLocales` limits which locales are indexed and listed as alternates; it defaults to every locale.
+ * @param {{title:string,description:string,path:string,locale?:string,origin?:string,base?:string,image?:string,keywords?:string[],robots?:string,tool?:SeoTool,indexedLocales?:string[]}} options */
 export function seoMetadata(options) {
   const locale = options.locale && isSupportedLanguage(options.locale) ? options.locale : 'en';
   const origin = siteOrigin(options.origin);
@@ -71,11 +77,11 @@ export function seoMetadata(options) {
   if (!imagePath.startsWith('/') || imagePath.startsWith('//') || /[\\?#]/.test(imagePath)) throw new Error('SEO image must be a site-local asset path');
   const canonical = origin ? `${origin}${path}` : '';
   const image = origin ? `${origin}${imagePath}` : imagePath;
-  const alternates = origin ? INDEXED_LOCALES.map((language) => ({ locale: language, href: `${origin}${localePath(options.path, language, base)}` })) : [];
+  const indexedLocales = options.indexedLocales ?? SEO_LOCALES;
+  const alternates = origin ? indexedLocales.map((language) => ({ locale: language, href: `${origin}${localePath(options.path, language, base)}` })) : [];
   // The host decides indexing per locale, overriding tool/translation robots.
   // Unconfigured previews remain nonindexable regardless of tool metadata.
-  const indexable = Boolean(origin) && isIndexedLocale(locale);
-  const robots = indexableRobots(origin, indexable);
+  const robots = indexingDirective(origin, indexedLocales.includes(locale));
   const schema = options.tool ? {
     '@context': 'https://schema.org', '@type': 'WebApplication',
     ...(canonical ? { '@id': `${canonical}#application`, url: canonical } : {}),

@@ -1,5 +1,6 @@
 import { languageCodes } from '../languages.js';
 import { MAX_LOCALE_PACK_BYTES } from './locale-packs.js';
+import { validateArticle } from './article.js';
 export const reservedIds = new Set(['api', 'policy', 'privacy', 'terms', 'bundles', 'icons', 'brand', 'illustrations', 'index', '404', '500', '503', '_app', 'offline', 'manifest', 'manifest-webmanifest', 'service-worker', 'pwa', 'id', 'og', 'robots', 'sitemap']);
 for (const code of languageCodes) if (code !== 'en') reservedIds.add(code);
 export const permissionNames = new Set(['clipboard-read', 'clipboard-write', 'geolocation', 'downloads', 'camera-capture', 'share-image', 'external-assets', 'wasm', 'workers', 'services', 'wiki-read', 'dns-query']);
@@ -160,6 +161,7 @@ export function validateManifest(manifest) {
       translations[/** @type {import('./types').ToolLocale} */ (locale)] = {
         name: text(value.name, 80, 'translated name'), description: text(value.description, 240, 'translated description'),
         ...(value.guide === undefined ? {} : { guide: guide(value.guide) }),
+        ...(value.article === undefined ? {} : { article: validateArticle(value.article) }),
         ...(value.permissionReasons === undefined ? {} : { permissionReasons: permissionReasons(value.permissionReasons, grantedNames) }),
         ...(value.seo === undefined ? {} : { seo: seo(value.seo) })
       };
@@ -195,7 +197,7 @@ export function validateManifest(manifest) {
   return {
     schemaVersion: manifest.schemaVersion, runtimeVersion: 1, locales: [...locales], appearance: { theme: 'host', protocolVersion: 1 },
     id: manifest.id, name, description, path: manifest.path, category: manifest.category, repository: manifest.repository,
-    version: manifest.version, status: manifest.status, capabilities, icon, seo: toolSeo, guide: toolGuide, permissions, assets, services, translations, ...(manifest.localePacks === undefined ? {} : { localePacks }),
+    version: manifest.version, status: manifest.status, capabilities, icon, seo: toolSeo, guide: toolGuide, ...(manifest.article === undefined ? {} : { article: validateArticle(manifest.article) }), permissions, assets, services, translations, ...(manifest.localePacks === undefined ? {} : { localePacks }),
     bundle: { format: 'html', file: bundle.file, sha256: bundle.sha256 },
     ...(artwork ? { artwork } : {})
   };

@@ -19,10 +19,11 @@
 
   let { data }: { data: PageData } = $props();
   const tool = $derived(localizedTool(data.tool, getLocale()));
+  const articleLocale = $derived(data.tool.translations?.[getLocale()]?.article ? getLocale() : 'en');
   $effect(() => recordRecentTool(data.tool.id));
 </script>
 
-<Seo title={tool.seo.title} description={tool.seo.description} path={`${tool.path}/`} keywords={tool.seo.keywords} robots={tool.seo.robots} {tool} />
+<Seo title={tool.seo.title} description={tool.seo.description} path={`${tool.path}/`} keywords={tool.seo.keywords} robots={tool.seo.robots} {tool} indexedLocales={data.indexedLocales} />
 
 <main id="main-content" class="page-shell tool-shell">
   <header class="surface tool-header">
@@ -39,8 +40,8 @@
     <p>{m.tool_isolated()}</p>
     <a class="clay-button small" href={localizedPath('/policy/')}>{m.tool_policy_link()} <Icon name="arrow-right" size={18} /></a>
   </aside>
-  {#if data.article}<ToolArticle article={data.article} toolName={tool.name} guides={data.guides} />{/if}
-  {#key tool.id}<AdSlot placement="tool" />{/key}
+  {#if tool.article}<ToolArticle article={tool.article} language={articleLocale} related={data.related} />{/if}
+  {#key tool.id}<AdSlot placement="tool" allowed={Boolean(tool.article) && data.indexedLocales.includes(getLocale())} />{/key}
   <noscript>{m.tool_noscript()}</noscript>
   <SiteFooter />
 </main>

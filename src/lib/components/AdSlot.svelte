@@ -2,12 +2,10 @@
   import { m } from '$lib/paraglide/messages.js';
   import { adsConfig } from '$lib/ads/settings.js';
   import { canRequestAd, requestAd } from '$lib/ads/client';
-  import { getLocale } from '$lib/paraglide/runtime.js';
-  import { isIndexedLocale } from '$lib/seo/metadata.js';
 
-  let { placement }: { placement: 'home' | 'tool' } = $props();
-  // Ads appear only on pages the site indexes (locales with full editorial content).
-  const slot = $derived(isIndexedLocale(getLocale()) ? adsConfig.placements[placement] : undefined);
+  let { placement, allowed = true }: { placement: 'home' | 'tool'; allowed?: boolean } = $props();
+  // Tool pages request ads only when the page is indexed with substantive content for its locale.
+  const slot = $derived(allowed ? adsConfig.placements[placement] : undefined);
   let element = $state<HTMLElement>();
   const testAttribute = $derived.by(() => {
     if (adsConfig.testMode) return 'on';
