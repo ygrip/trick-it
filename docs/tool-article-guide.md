@@ -22,7 +22,7 @@ This adds `project.article.inlang/settings.json`, `scripts/apply-article.mjs`, `
 | `limit1`..`limitN` (2-8) | Honest limitations and when to use something else |
 | `faq1Q`, `faq1A`.. (4-12) | Questions people actually ask |
 
-Plain text only: no HTML, Markdown or links. Paragraphs are at most 1,200 characters and the whole article under 28,000. Target 650-900 English words.
+Plain text only: no HTML, Markdown or links. **Never write `{` or `}` in a message**: Paraglide treats braces as placeholders and the compile breaks, and escaping them fails the article test. Describe such syntax in words or keep it out of the prose. Paragraphs are at most 1,200 characters and the whole article under 28,000. Target 650-900 English words (the validator limit is the 28,000-character total).
 
 ## Writing rules
 
