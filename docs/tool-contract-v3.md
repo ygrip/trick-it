@@ -62,6 +62,12 @@ An entry may include `permissionReasons`, a map from already declared permission
 
 Metadata localization does not translate the HTML bundle. Declare actual interface languages in optional `locales` (a nonempty unique list of supported codes, default `["en"]`), and use the runtime locale bridge described in [the runtime guide](tool-runtime.md). Unsupported interface locales use the tool's first supported language while platform navigation keeps its selected language. New localized SEO pages remain noindex pending reviewed copy.
 
+## Tool article
+
+A tool may publish reader documentation with its release: `manifest.article` (English) and `manifest.translations[locale].article` for each other language. Fields: `headings` (`about`, `features`, `limits`, `faq`), `about[]`, `features[{title,body}]`, `reference{title,sections[{heading,paragraphs[],items?[]}]}`, `example{title,paragraphs[],code?}`, `limits[]` and `faq[{question,answer}]`. Everything is plain text: paragraphs are at most 1,200 characters, titles 160, example code 4,000, and the whole article 28,000 characters. The host validates it (`src/lib/registry/article.js`), renders it below the tool and emits `FAQPage` structured data that mirrors the visible FAQ.
+
+The article is written with Paraglide JS in the tool repository and assembled at build time; see [tool-article-guide.md](tool-article-guide.md). A translated page is indexed, listed in the sitemap and eligible for ads only when its translation carries an article; otherwise it stays usable but renders `noindex,follow`.
+
 ## Language packs
 
 New scaffolds and localization migrations use Paraglide-generated English in the HTML and separate JSON files for non-English interfaces. Existing inline-localized releases remain schema-compatible; the scaffold release gate requires the efficient separate-pack approach for new work.
