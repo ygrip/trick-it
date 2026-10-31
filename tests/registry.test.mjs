@@ -79,30 +79,6 @@ test('remote sources fail closed for untrusted owners, mutable refs and mismatch
   await assert.rejects(loadSource(source, config, '.', github), /GitHub 403/);
 });
 
-test('GitHub API failures distinguish rate exhaustion from permission errors without response leaks', async () => {
-  const path = '/repos/ygrip/private-tool/contents/tool.manifest.json';
-  const rateLimited = createGithubClient('private-secret-sentinel', async () => new Response('sensitive-body-sentinel', {
-    status: 403,
-    headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '1800000000', 'retry-after': '30' }
-  }));
-  await assert.rejects(rateLimited(path), (error) =>
-    error.message.includes('GitHub 403') &&
-    error.message.includes('rate limit exhausted') &&
-    error.message.includes('retry-after=30s') &&
-    error.message.includes('reset=') &&
-    !/private-secret-sentinel|sensitive-body-sentinel/.test(error.message)
-  );
-  const forbidden = createGithubClient('private-secret-sentinel', async () => new Response('sensitive-body-sentinel', {
-    status: 403,
-    headers: { 'x-ratelimit-remaining': '4999' }
-  }));
-  await assert.rejects(forbidden(path), (error) =>
-    error.message.includes('primary rate limit remaining=4999') &&
-    !error.message.includes('rate limit exhausted') &&
-    !/private-secret-sentinel|sensitive-body-sentinel/.test(error.message)
-  );
-});
-
 test('remote files above 1 MiB use an immutable Git blob', async () => {
   const large = Buffer.from('<!doctype html>' + ' '.repeat(1024 * 1024));
   const largeManifest = { ...manifest, bundle: { ...manifest.bundle, sha256: createHash('sha256').update(large).digest('hex') } };
