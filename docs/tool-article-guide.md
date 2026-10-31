@@ -14,6 +14,17 @@ This helper is **non-publishing**. It copies the existing tool-owned manifest de
 
 The source-migration status and links to all 36 tool PRs are in [ARTICLE_PROGRESS.md](ARTICLE_PROGRESS.md). Existing host-only English draft JSON was relocated and removed from the host.
 
+## Audit untranslated article keys without publishing
+
+After drafting the English article, run this helper **from the host repository** against a sibling tool checkout:
+
+```sh
+node scripts/article-kit/audit-locales.mjs ../trick-it-tools/<tool-id>
+node scripts/article-kit/audit-locales.mjs ../trick-it-tools/<tool-id> --json --strict
+```
+
+It compares required English article keys against the eleven other tool-owned Paraglide catalogs, including missing catalogs, missing keys, untranslated exact-English values and obsolete starter keys. The `--strict` option exits non-zero for missing keys or invalid values; it does **not** treat exactly matching technical strings as an automatic failure. It never modifies the tool, generates translations, updates `tool.manifest.json` or publishes a draft. Fluent review and semantic translation checks remain mandatory.
+
 ## Install in a tool repository
 
 ```sh
