@@ -49,7 +49,25 @@ export function createGithubClient(credentials, fetcher = fetch) {
         redirect: 'error', signal: AbortSignal.timeout(30_000)
       });
     } catch { throw new Error('GitHub request failed'); }
-    if (!response.ok) throw new Error(`GitHub ${response.status}: ${path}`);
+    if (!response.ok) {
+      // Only report standard numeric rate-limit headers; never emit token values
+      // or the raw response body, which can contain sensitive provider details.
+      const remaining = response.headers.get('x-ratelimit-remaining');
+      const reset = response.headers.get('x-ratelimit-reset');
+      const retry = response.headers.get('retry-after');
+      const hints = [];
+      if ([403, 429].includes(response.status)) {
+        if (remaining === '0') {
+          const epoch = Number(reset);
+          hints.push('GitHub API rate limit exhausted');
+          if (reset && Number.isSafeInteger(epoch) && epoch > 0) hints.push('reset=' + new Date(epoch * 1000).toISOString());
+        } else if (remaining && /^\\d+$/.test(remaining)) {
+          hints.push('primary rate limit remaining=' + remaining);
+        }
+        if (retry && /^\\d+$/.test(retry)) hints.push('retry-after=' + retry + 's');
+      }
+      throw new Error(`GitHub ${response.status}: ${path}${hints.length ? ' (' + hints.join(', ') + ')' : ''}`);
+    }
     if (!response.body) throw new Error('empty GitHub response');
     const reader = response.body.getReader();
     const chunks = [];
