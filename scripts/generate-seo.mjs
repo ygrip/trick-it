@@ -75,7 +75,7 @@ function translated(tool, locale) {
   return { ...tool, name: translation?.name ?? tool.name, description: translation?.description ?? tool.description, seo: translation?.seo ?? tool.seo };
 }
 
-/** Publish host routes in every locale and each tool in the locales where it is indexed (see `toolIndexedLocales`).
+/** Publish host and tool routes in all supported locales (see `toolIndexedLocales`).
  * `images` (optional) maps `home-<locale>` / `tools/<id>-<locale>` to the social card path. */
 export function sitemapXml(tools, origin, base = '', images = {}) {
   origin = siteOrigin(origin);

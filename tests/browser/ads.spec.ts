@@ -13,9 +13,9 @@ test('site configuration controls automatic advertising and the frame policy', a
   const adRequests: string[] = [];
   await page.route('https://pagead2.googlesyndication.com/**', route => route.fulfill({ contentType: 'text/javascript', body: mockSdk }));
   page.on('request', request => { if (/googlesyndication|doubleclick/.test(request.url())) adRequests.push(request.url()); });
-  const slots = new Map([['/', deployment.placements.home], ['/json-tools/', deployment.placements.tool]]);
+  const slots = new Map([['/', deployment.placements.home], ['/json-tools/', deployment.placements.tool], ['/id/json-tools/', deployment.placements.tool]]);
   let expectedLoads = 0;
-  for (const path of ['/', '/json-tools/', '/privacy/', '/terms/', '/policy/']) {
+  for (const path of ['/', '/json-tools/', '/id/json-tools/', '/privacy/', '/terms/', '/policy/']) {
     let expectedAds = 0;
     if (deployment.enabled && slots.get(path)) expectedAds = 1;
     expectedLoads += expectedAds;
