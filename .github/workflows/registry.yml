@@ -27,6 +27,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # These checks do not require private tool downloads, so failures in the
+      # registry fetch must not hide regressions in tool editorial ownership.
+      - name: Verify article ownership and Paraglide seeds
+        run: node --test tests/editorial-ownership.test.mjs tests/article-seeds.test.mjs
       # Sync already verifies pinned manifest access, contract and every digest.
       # Skip the former duplicate access probe; a failed source still blocks the build.
       - name: Fetch and verify approved bundles
