@@ -61,10 +61,10 @@ export function createGithubClient(credentials, fetcher = fetch) {
           const epoch = Number(reset);
           hints.push('GitHub API rate limit exhausted');
           if (reset && Number.isSafeInteger(epoch) && epoch > 0) hints.push('reset=' + new Date(epoch * 1000).toISOString());
-        } else if (remaining && /^\\d+$/.test(remaining)) {
+        } else if (remaining && /^\d+$/.test(remaining)) {
           hints.push('primary rate limit remaining=' + remaining);
         }
-        if (retry && /^\\d+$/.test(retry)) hints.push('retry-after=' + retry + 's');
+        if (retry && /^\d+$/.test(retry)) hints.push('retry-after=' + retry + 's');
       }
       throw new Error(`GitHub ${response.status}: ${path}${hints.length ? ' (' + hints.join(', ') + ')' : ''}`);
     }
