@@ -4,7 +4,6 @@
 // Reports what a reviewer must translate without ever modifying manifests.
 import { readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const LANGUAGES = ['en','id','ms','fil','th','vi','zh','my','km','lo','ja','hi'];
 const cwd = process.argv.slice(2).find(arg => !arg.startsWith('--'));
