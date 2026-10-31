@@ -38,7 +38,7 @@ These six already contain the Paraglide article pipeline, messages and draft man
 
 These ten now contain both the untouched original English research draft in `docs/editorial/english-source.json` and an **unreviewed adaptation** in tool-owned `messages/article/en.json`, with `project.article.inlang/settings.json`. Table rows were linearized to text items and any code blocks remain in the original source pending careful MessageFormat-safe handling. Cron Planner continues its existing article-kit PR #3; SEO Checker continues its export-feature PR #3. **These are not released or verified translations.** Fact-check each claim against current tool code, add the other eleven actual article translations, finish the release pipeline, and run tool/browser tests before merging.
 
-## Twenty tools with 12-locale Paraglide editorial seeds
+## Twenty tools with expanded English drafts and 11 legacy locale seeds
 
 | Tool | Draft PR |
 | --- | --- |
@@ -63,7 +63,38 @@ These ten now contain both the untouched original English research draft in `doc
 | `text-manipulation` | [#5](https://github.com/ygrip/text-manipulation/pull/5) |
 | `time-wizard` | [#3](https://github.com/ygrip/time-wizard/pull/3) |
 
-Each PR contains a tool-owned `project.article.inlang/settings.json`, **12 `messages/article/<locale>.json` starter catalogs** and `docs/editorial/ARTICLE_BRIEF.md`. Strings came from that tool's existing translated metadata and usage guide; these are **seeds**, not a complete, original technical article, verified FAQ, or fresh professional translation. The files are **not wired into build or `tool.manifest.json`**, so no weak editorial draft becomes public because a PR was opened.
+**31 October continuation:** all twenty PRs now contain newly expanded, tool-specific **English** articles in `messages/article/en.json` (521–907 words) with feature descriptions, technical reference sections, worked workflows, limitations and FAQs. The English catalogs were checked structurally: at least two introduction paragraphs, four features, two technical reference sections, a worked example, two limitations and four FAQ pairs; no missing required headings, oversized message strings or MessageFormat braces were found. All twenty `docs/editorial/ARTICLE_BRIEF.md` files now explicitly record the outstanding work. This is editorial source progress, **not complete 12-language articles**: the other eleven catalog files still hold translated-guide seed values with nonmatching keys. Nothing was wired into build or `tool.manifest.json`, so English drafts are not automatically published.
+
+## Editorial continuation — remaining thirty tool PRs (31 October 2026)
+
+**Ten already-researched tools:** cleaned unsupported Markdown links, inline backticks and formatting in all ten `messages/article/en.json` Paraglide catalogs. Original code examples remain archived in tool-owned `docs/editorial/english-source.json` where their code braces cannot safely be compiled into Paraglide messages. These English drafts are substantive but still need source/editorial review, 11 translations and publishing integration.
+
+**Twenty formerly guide-only tools:** replaced the short English starter catalogs with tool-specific technical article drafts. Their article briefs now explain the missing locale keys and native-review requirements. No corresponding published release artifact or registry update has been made. Current English word counts are reference information, **not an AdSense requirement**:
+
+| Tool | English words | Stage |
+| --- | ---: | --- |
+| `ai-music-maker` | 907 | English content drafted; eleven article locales pending |
+| `app-icon-generator` | 698 | English content drafted; eleven article locales pending |
+| `color-mapper` | 723 | English content drafted; eleven article locales pending |
+| `encoder-decoder` | 697 | English content drafted; eleven article locales pending |
+| `fake-data-generator` | 696 | English content drafted; eleven article locales pending |
+| `fractal-studio` | 556 | English content drafted; eleven article locales pending |
+| `gif-maker` | 640 | English content drafted; eleven article locales pending |
+| `hash-generator` | 613 | English content drafted; eleven article locales pending |
+| `id-generator` | 570 | English content drafted; eleven article locales pending |
+| `image-compression` | 620 | English content drafted; eleven article locales pending |
+| `image-converter` | 561 | English content drafted; eleven article locales pending |
+| `image-editor` | 631 | English content drafted; eleven article locales pending |
+| `list-tools` | 521 | English content drafted; eleven article locales pending |
+| `markdown-studio` | 605 | English content drafted; eleven article locales pending |
+| `pdf-tools` | 562 | English content drafted; eleven article locales pending |
+| `qr-bar-coder` | 752 | English content drafted; eleven article locales pending |
+| `regex-mania` | 639 | English content drafted; eleven article locales pending |
+| `svg-tools` | 635 | English content drafted; eleven article locales pending |
+| `text-manipulation` | 647 | English content drafted; eleven article locales pending |
+| `time-wizard` | 655 | English content drafted; eleven article locales pending |
+
+**Release safety:** do not fill missing locale keys with English copies, claim translated content merely because a file exists, or publish the guide seeds through the host. **CI is intentionally outside the scope of this editorial continuation**, not evidence that a release has passed. The tool PRs remain drafts until translation and source review is complete.
 
 ## Follow-up edits — 31 October 2026 (six advanced article PRs)
 
@@ -94,7 +125,7 @@ Source-level correctness and article-example regression work was committed on ea
 - The six earlier translated article branches still need editorial/native-language review and independent checks.
 - Hex Studio has **85 interface message keys per locale**, but 57 values in each of `ms`, `fil`, `th`, `vi`, `zh`, `my`, `km`, `lo`, `ja` and `hi` are identical to English; some technical terms are legitimately shared but many help/error strings are still English. Finish UI localization separately from its article PR before claiming full-language readiness.
 - The ten migrated English drafts have **unreviewed Paraglide English article catalogs**, but the 11 other locales and publication integration are unfinished.
-- The twenty new seed PRs are **not** full articles and do not modify release manifests.
+- The twenty seed-only PRs have been upgraded to **substantive English articles** and audited for schema shape; however, the 11 non-English article catalogs have not been expanded or reviewed. They do not modify release manifests.
 - No new tool source release has been merged, pinned or deployed by this continuation; PR #110 should remain WIP.
 - CSV Tools export fix remains unverified by CI until its separate Actions failure is investigated.
 - The latest host CI on commit `63e5ecc9` **passed** registry verification, unit checks, production builds, browser and mobile checks ([run 41175623438](https://github.com/ygrip/trick-it/actions/runs/41175623438)); deployment was skipped. Earlier private-tool HTTP 403 failures were observed on prior runs but are not a current host CI failure. Preserve source SHA and bundle digest checks.
