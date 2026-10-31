@@ -6,7 +6,7 @@ This document tracks Trick-it [host PR #110](https://github.com/ygrip/trick-it/p
 
 The host now contains only the **article schema, renderer, seed/install tooling and platform-wide translations**, not editorial drafts for individual tools. All 16 earlier English host drafts were copied into their own tool repositories and removed from `docs/article-drafts/`. The one legacy tool-specific `json_intro` message was removed from all 12 host language catalogs. Generic host UI, consent, permissions, legal notices and navigation messages stay in the host.
 
-**All 30 previously unfinished tools already had tool-owned 12-language interface and guide translations** before this continuation. The new editorial work is a separate, richer content layer; do not treat existing metadata localization as proof of reviewed article translations.
+**All 30 previously unfinished tools already had tool-owned catalogs for 12 interface/guide locales** before this continuation. Catalog presence is not proof of translated coverage: for example, Hex Studio's ten non-English/non-Indonesian interface catalogs still contain substantial English fallbacks. The new editorial work is a separate richer layer; both native UI localization gaps and article translations require review.
 
 ## Existing six article PRs (12-language drafts; native review pending)
 
@@ -92,6 +92,7 @@ Source-level correctness and article-example regression work was committed on ea
 ## Explicitly outstanding
 
 - The six earlier translated article branches still need editorial/native-language review and independent checks.
+- Hex Studio has **85 interface message keys per locale**, but 57 values in each of `ms`, `fil`, `th`, `vi`, `zh`, `my`, `km`, `lo`, `ja` and `hi` are identical to English; some technical terms are legitimately shared but many help/error strings are still English. Finish UI localization separately from its article PR before claiming full-language readiness.
 - The ten migrated English drafts have **unreviewed Paraglide English article catalogs**, but the 11 other locales and publication integration are unfinished.
 - The twenty new seed PRs are **not** full articles and do not modify release manifests.
 - No new tool source release has been merged, pinned or deployed by this continuation; PR #110 should remain WIP.
