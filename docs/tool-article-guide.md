@@ -1,6 +1,6 @@
 # Tool-owned article (Paraglide JS, 12 languages)
 
-Each tool repository owns the reader documentation for its page. The host renders it from the manifest (`article`, `translations[locale].article`); see [tool-contract-v3.md](tool-contract-v3.md). A translation is indexed and carries ads only when the tool publishes an article in that locale.
+Each tool repository owns the reader documentation for its page. The host renders it from the manifest (`article`, `translations[locale].article`); see [tool-contract-v3.md](tool-contract-v3.md). Publishing an article is independent of existing tool-page indexing and ad eligibility; factual, localized documentation is still the goal of this rollout.
 
 ## Install in a tool repository
 

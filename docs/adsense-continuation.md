@@ -7,7 +7,7 @@ The goal is to make `tools.readynaz.com` useful, indexable, and eligible for AdS
 ## Important corrections
 
 - Google does not prescribe a minimum word count, FAQ schema, a particular number of articles, or a mandatory wait after sitemap submission. Usefulness, originality, policy compliance, and experience matter more than length. Do not pad text or block a release merely to meet an arbitrary word target.
-- Translated pages are not automatically duplicate or low-value content. A useful tool can be valuable with little prose. The work-in-progress English-only indexing and ad restrictions are **not a settled decision**: review actual locale quality and Google documentation, then agree any broad deindexing with the user before deploying it.
+- Translated pages are not automatically duplicate or low-value content. A useful tool can be valuable with little prose. The earlier English-only indexing and ad restrictions have been removed from this WIP branch. Review actual localized page quality before making any targeted future indexing decisions; broad deindexing requires user agreement.
 - A successful sitemap status means Google read the sitemap; it does not mean its URLs are indexed or that AdSense reviewed them. AdSense may assess pages beyond a sitemap. Do not infer the reason for a rejection or compare sites' approval criteria from public HTML alone.
 - Preserve factual authorship and dates; do not assert a person wrote, reviewed, or published material without evidence. Check privacy and data-processing claims against the implementation. Changing consent or metadata alone does not fix content quality.
 
@@ -24,7 +24,7 @@ The goal is to make `tools.readynaz.com` useful, indexable, and eligible for AdS
 - `src/app.css` was added as a standalone draft, while the existing stylesheet is `src/routes/app.css`; integrate styles deliberately and verify they are loaded.
 - Schemas and validation currently impose arbitrary minimum word counts. Replace them with structural and factual review.
 - Article dates and guide author metadata need evidence. No guides have yet been written. Do not ship placeholders or assume generated JSON represents human review.
-- `INDEXED_LOCALES` currently restricts indexing and ads to English. This proposed approach conflicts with the goal of usable, localized tool pages; reassess it and update tests and docs consistently. Confirm canonical URLs, `hreflang`, sitemap, localized content, and ad behavior for all 12 languages.
+- The former article-gated tool indexing and advertising restriction was removed. All 12 tool locale routes remain in the sitemap. Confirm canonical URLs, `hreflang`, sitemap, translated tool interfaces, and ad behavior on built pages; publishing articles is a separate quality task.
 - Earlier local checks passed before later edits; they do not validate the current branch. Run fresh checks after implementation.
 
 Keep this PR marked WIP until implementation and verification are complete. Never include credentials, personal tax identifiers, temporary assets, or unrelated files.
