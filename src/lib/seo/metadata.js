@@ -5,17 +5,14 @@ export const SEO_LOCALES = [...languageCodes];
 export const SOCIAL_CARD_LOCALES = ['en', 'id'];
 
 /**
- * Locales in which a tool page is indexed. English is always indexed; a translation is
- * indexed only when the tool itself ships a localized article (tool-owned, written with
- * Paraglide JS). Other translations stay usable but render `noindex,follow`, are left out
- * of the sitemap and hreflang set, and serve no ads, so a translated UI shell is never
- * published as a thin duplicate of the English page.
- * @param {{ translations?: Record<string, { article?: unknown }> } | undefined} tool
+ * Keep established tool routes indexable independently of editorial rollout.
+ * An absent article is not itself an AdSense violation or reason to deindex.
+ * Decide targeted exclusions from the actual primary page content instead.
+ * @param {{ translations?: Record<string, { article?: unknown }> } | undefined} _tool
  * @returns {string[]}
  */
-export function toolIndexedLocales(tool) {
-  const localized = SEO_LOCALES.filter((locale) => locale !== 'en' && Boolean(tool?.translations?.[locale]?.article));
-  return ['en', ...localized];
+export function toolIndexedLocales(_tool) {
+  return [...SEO_LOCALES];
 }
 
 /** @param {string | undefined} value */

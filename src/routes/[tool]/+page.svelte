@@ -23,7 +23,7 @@
   $effect(() => recordRecentTool(data.tool.id));
 </script>
 
-<Seo title={tool.seo.title} description={tool.seo.description} path={`${tool.path}/`} keywords={tool.seo.keywords} robots={tool.seo.robots} {tool} indexedLocales={data.indexedLocales} />
+<Seo title={tool.seo.title} description={tool.seo.description} path={`${tool.path}/`} keywords={tool.seo.keywords} robots={tool.seo.robots} {tool} />
 
 <main id="main-content" class="page-shell tool-shell">
   <header class="surface tool-header">
@@ -41,7 +41,7 @@
     <a class="clay-button small" href={localizedPath('/policy/')}>{m.tool_policy_link()} <Icon name="arrow-right" size={18} /></a>
   </aside>
   {#if tool.article}<ToolArticle article={tool.article} language={articleLocale} related={data.related} />{/if}
-  {#key tool.id}<AdSlot placement="tool" allowed={Boolean(tool.article) && data.indexedLocales.includes(getLocale())} />{/key}
+  {#key tool.id}<AdSlot placement="tool" />{/key}
   <noscript>{m.tool_noscript()}</noscript>
   <SiteFooter />
 </main>

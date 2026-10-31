@@ -42,14 +42,14 @@ test('production build requires canonical, nonempty sitemap and real localized H
   }
 });
 
-test('36 tools without articles publish only their English page despite tool noindex flags', async () => {
+test('36 tools without articles preserve all localized public URLs despite tool noindex flags', async () => {
   const tools = Array.from({ length: 36 }, (_, index) => ({
     id: `fixture-${index}`, path: `/fixture-${index}`, seo: { robots: 'noindex' },
     translations: Object.fromEntries(languageCodes.map((locale) => [locale, { seo: { robots: 'noindex' } }]))
   }));
   const { root } = await fixture(origin, tools);
   try {
-    assert.deepEqual(await verifySeoBuild({ root, requireProduction: true }), { origin, pages: languageCodes.length * 4 + 36 });
+    assert.deepEqual(await verifySeoBuild({ root, requireProduction: true }), { origin, pages: languageCodes.length * (4 + 36) });
   } finally {
     await rm(root, { recursive: true, force: true });
   }

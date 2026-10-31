@@ -4,7 +4,7 @@
   import { canRequestAd, requestAd } from '$lib/ads/client';
 
   let { placement, allowed = true }: { placement: 'home' | 'tool'; allowed?: boolean } = $props();
-  // Tool pages request ads only when the page is indexed with substantive content for its locale.
+  // Ad placement is controlled by site configuration, independently of article rollout.
   const slot = $derived(allowed ? adsConfig.placements[placement] : undefined);
   let element = $state<HTMLElement>();
   const testAttribute = $derived.by(() => {

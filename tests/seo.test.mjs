@@ -73,12 +73,12 @@ test('JSON-LD and host-authored social SVG escape hostile metadata and bound lon
   assert.ok(wrapText('A'.repeat(1000), 29, 3).at(-1).endsWith('…'));
 });
 
-test('sitemap and robots include noindex-marked tools in their indexed locales without invented timestamps', () => {
+test('sitemap and robots retain localized tool pages without invented timestamps', () => {
   const hidden = { ...tool, id: 'hidden', path: '/hidden', seo: { ...tool.seo, robots: 'noindex' }, translations: {} };
   const xml = sitemapXml([tool, hidden], origin);
   assert.ok(xml.includes(`${origin}/json-tools/`));
-  assert.ok(!xml.includes(`${origin}/id/json-tools/`));
-  assert.ok(!xml.includes(`hreflang="id" href="${origin}/id/json-tools/"`));
+  assert.ok(xml.includes(`${origin}/id/json-tools/`));
+  assert.ok(xml.includes(`hreflang="id" href="${origin}/id/json-tools/"`));
   assert.ok(xml.includes(`${origin}${localePath('/hidden/', 'en')}`));
   assert.ok(!xml.includes('<lastmod>'));
   assert.ok(xml.includes(`hreflang="x-default" href="${origin}/json-tools/"`));
@@ -108,13 +108,13 @@ test('production catalog sitemap contains every host locale and each tool in its
   assert.equal(urls.length, languageCodes.length * 4 + toolPages);
 });
 
-test('sitemap ignores tool-level noindex and lists a translation only when it has an article', () => {
+test('sitemap includes all tool locales regardless of article publication status', () => {
   const localized = { ...tool, translations: { ...tool.translations, zh: { seo: { ...tool.seo, robots: 'noindex' }, article: { about: ['x'] } } } };
   const xml = sitemapXml([localized], origin);
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-  assert.equal(urls.length, languageCodes.length * 4 + 2);
+  assert.equal(urls.length, languageCodes.length * 5);
   assert.ok(urls.includes(`${origin}/zh/json-tools/`));
-  assert.ok(!urls.includes(`${origin}/ja/json-tools/`));
+  assert.ok(urls.includes(`${origin}/ja/json-tools/`));
 });
 
 test('generation writes cache-busted social cards and config, keeping a tool named home separate', async () => {
@@ -143,7 +143,7 @@ test('generation writes cache-busted social cards and config, keeping a tool nam
     assert.equal(configuration.base, '');
     assert.deepEqual(configuration.images, result.images);
     const sitemap = await readFile(join(root, 'static/sitemap.xml'), 'utf8');
-    assert.equal([...sitemap.matchAll(/<loc>/g)].length, languageCodes.length * 4 + 2);
+    assert.equal([...sitemap.matchAll(/<loc>/g)].length, languageCodes.length * 6);
     assert.ok(sitemap.includes(`${origin}${localePath('/home/', 'en')}`));
     for (const locale of languageCodes) {
       assert.ok(result.images[`home-${locale}`]);
@@ -176,19 +176,16 @@ test('all supported languages have indexed canonical routes, alternates and safe
   }
 });
 
-test('a tool translation is indexed only when the tool ships a localized article', () => {
-  const article = { about: ['x'] };
-  const withIdArticle = { ...tool, translations: { id: { ...tool.translations.id, article }, ms: { name: 'Alat', description: 'Rapikan.' } } };
-  assert.deepEqual(toolIndexedLocales(tool), ['en']);
-  assert.deepEqual(toolIndexedLocales(withIdArticle), ['en', 'id']);
-  const indexedLocales = toolIndexedLocales(withIdArticle);
-  const indexed = seoMetadata({ title: tool.name, description: tool.description, path: tool.path, origin, locale: 'id', tool, indexedLocales });
-  const unindexed = seoMetadata({ title: tool.name, description: tool.description, path: tool.path, origin, locale: 'ms', tool, indexedLocales });
-  assert.equal(indexed.robots, 'index,follow');
-  assert.equal(unindexed.robots, 'noindex,follow');
-  assert.deepEqual(indexed.alternates.map(({ locale }) => locale), ['en', 'id']);
+test('tool article rollout never implicitly removes localized routes from SEO', () => {
+  const withIdArticle = { ...tool, translations: { id: { ...tool.translations.id, article: { about: ['x'] } }, ms: { name: 'Alat', description: 'Rapikan.' } } };
+  assert.deepEqual(toolIndexedLocales(tool), languageCodes);
+  assert.deepEqual(toolIndexedLocales(withIdArticle), languageCodes);
+  for (const locale of languageCodes) {
+    const metadata = seoMetadata({ title: tool.name, description: tool.description, path: tool.path, origin, locale, tool, indexedLocales: toolIndexedLocales(withIdArticle) });
+    assert.equal(metadata.robots, 'index,follow');
+    assert.deepEqual(metadata.alternates.map(({ locale: code }) => code), languageCodes);
+  }
   const xml = sitemapXml([withIdArticle], origin);
-  assert.ok(xml.includes(`${origin}/id/json-tools/`));
-  assert.ok(!xml.includes(`${origin}/ms/json-tools/`));
+  for (const locale of languageCodes) assert.ok(xml.includes(`${origin}${localePath(tool.path, locale)}`), `Missing ${locale} tool route`);
   assert.equal(seoMetadata({ title: 'Home', description: 'Home.', path: '/', origin, locale: 'ms' }).robots, 'index,follow');
 });
