@@ -2,6 +2,18 @@
 
 Each tool repository owns the reader documentation for its page. The host renders it from the manifest (`article`, `translations[locale].article`); see [tool-contract-v3.md](tool-contract-v3.md). Publishing an article is independent of existing tool-page indexing and ad eligibility; factual, localized documentation is still the goal of this rollout.
 
+## Safe migration from existing tool translations
+
+For tools not yet carrying editorial copy, start with:
+
+```sh
+node scripts/article-kit/seed-locales.mjs ../trick-it-tools/<tool-id>
+```
+
+This helper is **non-publishing**. It copies the existing tool-owned manifest description and translated usage guides into 12 `messages/article/<locale>.json` starter files, creates a separate Paraglide project, and writes a tool-specific editorial brief. It refuses to overwrite existing files. **These are seeds, not article translations**: they deliberately omit unsupported technical sections, fabricated FAQ entries and editorial validation. Complete and review these in the tool repository before installing the build integration below. The host neither stores nor publishes the tool's article text.
+
+The source-migration status and links to all 36 tool PRs are in [ARTICLE_PROGRESS.md](ARTICLE_PROGRESS.md). Existing host-only English draft JSON was relocated and removed from the host.
+
 ## Install in a tool repository
 
 ```sh
