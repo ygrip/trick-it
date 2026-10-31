@@ -36,7 +36,7 @@ These six already contain the Paraglide article pipeline, messages and draft man
 | `seo-checker` | [#3](https://github.com/ygrip/seo-checker/pull/3) |
 | `who-track-me` | [#8](https://github.com/ygrip/who-track-me/pull/8) |
 
-These ten have the original, unreviewed English research draft in **their own repository** at `docs/editorial/english-source.json`. Cron Planner continues its existing article-kit PR #3; SEO Checker continues its export-feature PR #3, so its article claims must match the new feature. The other eight have separate draft editorial-ownership PRs. **This is a source migration, not publication**: the English draft must be fact checked, adapted to the Paraglide article contract, and translated in all 12 locales. Do not merge an incomplete tool PR.
+These ten now contain both the untouched original English research draft in `docs/editorial/english-source.json` and an **unreviewed adaptation** in tool-owned `messages/article/en.json`, with `project.article.inlang/settings.json`. Table rows were linearized to text items and any code blocks remain in the original source pending careful MessageFormat-safe handling. Cron Planner continues its existing article-kit PR #3; SEO Checker continues its export-feature PR #3. **These are not released or verified translations.** Fact-check each claim against current tool code, add the other eleven actual article translations, finish the release pipeline, and run tool/browser tests before merging.
 
 ## Twenty tools with 12-locale Paraglide editorial seeds
 
@@ -71,13 +71,14 @@ Each PR contains a tool-owned `project.article.inlang/settings.json`, **12 `mess
 2. Finalize the English article in tool-owned `messages/article/en.json`, with precise limits and substantive examples. Use the existing article schema; the host must never become the source of tool content.
 3. Translate **all the same semantic keys** into `id ms fil th vi zh my km lo ja hi` with the tool's Paraglide project. Preserve code examples, numbers, technical terms and supported feature semantics. Compare generated output, not only JSON key equality. Fluent/native review remains required; do not label generated or inherited copy as verified.
 4. Install/finish the article pipeline from `scripts/article-kit/`: compile messages, append articles to `tool.manifest.json`, validate exact released JSON, and keep the locale packs separate. Do not modify release digests or host registry generated files manually.
-5. Run current tool build/unit/artifact tests, its local host integration and browser tests, inspect all 12 languages and release bytes. Resolve failures and publish reviewed source commits. **Only after each tool PR is merged and released**, re-pin the complete SHA through host registry sync; verify actual prere­ndered server HTML, canonical/hreflang, sitemap and ad behavior in host tests.
+5. Run current tool build/unit/artifact tests, its local host integration and browser tests, inspect all 12 languages and release bytes. Resolve failures and publish reviewed source commits. **Only after each tool PR is merged and released**, re-pin the complete SHA through host registry sync; verify actual prerendered server HTML, canonical/hreflang, sitemap and ad behavior in host tests.
 6. Recheck current AdSense policy, consent and content quality before a final host merge. The host's established locale indexing remains intact throughout this work. No blanket noindex or ad restrictions are implied by editorial status.
 
 ## Explicitly outstanding
 
 - The six earlier translated article branches still need editorial/native-language review and independent checks.
-- The ten migrated source drafts are **not** installed publication catalogs.
+- The ten migrated English drafts have **unreviewed Paraglide English article catalogs**, but the 11 other locales and publication integration are unfinished.
 - The twenty new seed PRs are **not** full articles and do not modify release manifests.
 - No new tool source release has been merged, pinned or deployed by this continuation; PR #110 should remain WIP.
 - CSV Tools export fix remains unverified by CI until its separate Actions failure is investigated.
+- The current host CI fails before tests during immutable private-tool source verification: GitHub returns HTTP 403 on different pinned tools (`cron-planner` in the first attempt, `ai-music-maker` on retry). This does **not** prove a code failure or a specific credential error. Investigate `TOOLS_GITHUB_TOKEN` read access, GitHub API rate/abuse limits and retry logs. Do not weaken pinned SHA or integrity validation. The workflow now runs independent editorial-ownership and seed tests before the registry fetch.
