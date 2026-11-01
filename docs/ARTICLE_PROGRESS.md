@@ -98,7 +98,7 @@ These ten now contain both the untouched original English research draft in `doc
 | `image-editor` | 631 | English content drafted; eleven article locales pending |
 | `list-tools` | 521 | English content drafted; eleven article locales pending |
 | `markdown-studio` | 605 | English content drafted; eleven article locales pending |
-| `pdf-tools` | 562 | English content drafted; eleven article locales pending |
+| `pdf-tools` | 562 | 12 article locales complete; assembled in PDF Tools 0.3.3 manifest; [tool PR #6](https://github.com/ygrip/pdf-tools/pull/6) under review (native fluency unverified) |
 | `qr-bar-coder` | 752 | English content drafted; eleven article locales pending |
 | `regex-mania` | 639 | English content drafted; eleven article locales pending |
 | `svg-tools` | 635 | English content drafted; eleven article locales pending |
