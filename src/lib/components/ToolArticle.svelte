@@ -41,7 +41,10 @@
   <section aria-labelledby="worked-example">
     <h2 id="worked-example">{article.example.title}</h2>
     {#each article.example.paragraphs as paragraph, index (index)}<p>{paragraph}</p>{/each}
-    {#if article.example.code}<pre class="article-code"><code>{article.example.code}</code></pre>{/if}
+    {#if article.example.code}
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex: Keyboard users need to scroll long code examples. -->
+      <pre class="article-code" role="region" aria-label={article.example.title} tabindex="0"><code>{article.example.code}</code></pre>
+    {/if}
   </section>
 
   <section aria-labelledby="limitations">
@@ -77,6 +80,7 @@
   .feature-list li { display: grid; gap: 4px; }
   .feature-list strong { color: var(--text); }
   .article-code { overflow-x: auto; padding: 16px; border-radius: 16px; background: var(--surface-strong, rgba(127, 127, 127, .12)); line-height: 1.5; }
+  .article-code:focus-visible { outline: 3px solid var(--accent, #5c4bc4); outline-offset: 2px; }
   .article-code code { white-space: pre; }
   details { padding: 12px 0; border-bottom: 1px solid var(--line); }
   summary { cursor: pointer; font-weight: 800; }
