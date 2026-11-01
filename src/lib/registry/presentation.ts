@@ -4,5 +4,5 @@ import type { ToolManifest, ToolLocale } from './types';
 export function localizedTool(tool: ToolManifest, locale: string): ToolManifest {
   const translation = tool.translations?.[locale as ToolLocale];
   if (!translation) return tool;
-  return { ...tool, name: translation.name ?? tool.name, description: translation.description ?? tool.description, guide: translation.guide ?? tool.guide, seo: translation.seo ?? tool.seo };
+  return { ...tool, name: translation.name ?? tool.name, description: translation.description ?? tool.description, guide: translation.guide ?? tool.guide, article: translation.article ?? tool.article, seo: translation.seo ?? tool.seo };
 }

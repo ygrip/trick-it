@@ -4,6 +4,17 @@ export const SEO_LOCALES = [...languageCodes];
 // Bundled social-card fonts currently cover the reviewed English/Indonesian art.
 export const SOCIAL_CARD_LOCALES = ['en', 'id'];
 
+/**
+ * Keep established tool routes indexable independently of editorial rollout.
+ * An absent article is not itself an AdSense violation or reason to deindex.
+ * Decide targeted exclusions from the actual primary page content instead.
+ * @param {{ translations?: Record<string, { article?: unknown }> } | undefined} _tool
+ * @returns {string[]}
+ */
+export function toolIndexedLocales(_tool) {
+  return [...SEO_LOCALES];
+}
+
 /** @param {string | undefined} value */
 export function siteOrigin(value = '') {
   if (!value.trim()) return '';
@@ -40,10 +51,19 @@ export function safeJsonLd(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
+/** Previews hide everything; production locales without editorial content stay crawlable but unindexed.
+ * @param {string} origin @param {boolean} indexable */
+function indexingDirective(origin, indexable) {
+  if (!origin) return 'noindex,nofollow';
+  if (!indexable) return 'noindex,follow';
+  return 'index,follow';
+}
+
 /** @typedef {{id:string,name:string,version:string,category:string,description?:string,locales?:string[],capabilities?:string[],addedAt?:string}} SeoTool */
 
 const applicationCategories = /** @type {Record<string, string>} */ ({ developer: 'DeveloperApplication', media: 'MultimediaApplication', data: 'BusinessApplication', productivity: 'UtilitiesApplication' });
-/** @param {{title:string,description:string,path:string,locale?:string,origin?:string,base?:string,image?:string,keywords?:string[],robots?:string,tool?:SeoTool}} options */
+/** `indexedLocales` limits which locales are indexed and listed as alternates; it defaults to every locale.
+ * @param {{title:string,description:string,path:string,locale?:string,origin?:string,base?:string,image?:string,keywords?:string[],robots?:string,tool?:SeoTool,indexedLocales?:string[]}} options */
 export function seoMetadata(options) {
   const locale = options.locale && isSupportedLanguage(options.locale) ? options.locale : 'en';
   const origin = siteOrigin(options.origin);
@@ -54,10 +74,11 @@ export function seoMetadata(options) {
   if (!imagePath.startsWith('/') || imagePath.startsWith('//') || /[\\?#]/.test(imagePath)) throw new Error('SEO image must be a site-local asset path');
   const canonical = origin ? `${origin}${path}` : '';
   const image = origin ? `${origin}${imagePath}` : imagePath;
-  const alternates = origin ? SEO_LOCALES.map((language) => ({ locale: language, href: `${origin}${localePath(options.path, language, base)}` })) : [];
-  // The host indexes every production route, overriding tool/translation robots.
+  const indexedLocales = options.indexedLocales ?? SEO_LOCALES;
+  const alternates = origin ? indexedLocales.map((language) => ({ locale: language, href: `${origin}${localePath(options.path, language, base)}` })) : [];
+  // The host decides indexing per locale, overriding tool/translation robots.
   // Unconfigured previews remain nonindexable regardless of tool metadata.
-  const indexable = Boolean(origin);
+  const robots = indexingDirective(origin, indexedLocales.includes(locale));
   const schema = options.tool ? {
     '@context': 'https://schema.org', '@type': 'WebApplication',
     ...(canonical ? { '@id': `${canonical}#application`, url: canonical } : {}),
@@ -73,7 +94,7 @@ export function seoMetadata(options) {
   } : null;
   return { title, description: options.description, path, canonical, image,
     imageAlt: `${options.tool?.name || 'trick-it'} — ${options.description}`,
-    keywords: (options.keywords || []).join(', '), robots: indexable ? 'index,follow' : 'noindex,nofollow',
+    keywords: (options.keywords || []).join(', '), robots,
     locale: /** @type {Record<string, string>} */ ({ en: 'en_US', id: 'id_ID', ms: 'ms_MY', fil: 'fil_PH', th: 'th_TH', vi: 'vi_VN', zh: 'zh_CN', my: 'my_MM', km: 'km_KH', lo: 'lo_LA', ja: 'ja_JP', hi: 'hi_IN' })[locale] ?? 'en_US', alternateLocale: locale === 'id' ? 'en_US' : 'id_ID',
     alternates, defaultHref: origin ? `${origin}${localePath(options.path, 'en', base)}` : '', schema };
 }

@@ -117,7 +117,8 @@ export async function checkToolRelease(toolRoot, { baseline } = {}) {
   // Final registry performance checks remain authoritative for the actual entry.
   const { artwork, ...entry } = manifest;
   entry.addedAt = new Date().toISOString();
-  const entryBudget = toolEntryGzipBudget(manifest.locales);
+  const hasArticles = manifest.article !== undefined || Object.values(manifest.translations ?? {}).some(translation => translation.article !== undefined);
+  const entryBudget = toolEntryGzipBudget(manifest.locales, hasArticles);
   if (gzipSync(JSON.stringify(entry)).length > entryBudget) throw new Error('Catalog metadata exceeds the ' + entryBudget + ' byte gzip budget for ' + manifest.locales.length + ' declared locales');
   await checkToolchain(root, manifest);
   const english = await readCatalog(root, 'en');

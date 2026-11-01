@@ -7,7 +7,16 @@ export type ToolAsset = { id: string; url: string; sha256: string; bytes: number
 export type ToolService = { id: string; handler: 'pagespeed-seo' | 'tracker-audit'; rateLimit: { limit: number; periodSeconds: 10 | 60 }; turnstile: boolean };
 export type ToolSeo = { title: string; description: string; keywords: string[]; robots: 'index' | 'noindex' };
 export type ToolGuide = { summary: string; steps: string[] };
-export type ToolTranslation = { name: string; description: string; guide?: ToolGuide; seo?: ToolSeo; permissionReasons?: Partial<Record<ToolPermissionName, string>> };
+export type ToolArticle = {
+  headings: { about: string; features: string; limits: string; faq: string };
+  about: string[];
+  features: { title: string; body: string }[];
+  reference: { title: string; sections: { heading: string; paragraphs: string[]; items?: string[] }[] };
+  example: { title: string; paragraphs: string[]; code?: string };
+  limits: string[];
+  faq: { question: string; answer: string }[];
+};
+export type ToolTranslation = { name: string; description: string; guide?: ToolGuide; article?: ToolArticle; seo?: ToolSeo; permissionReasons?: Partial<Record<ToolPermissionName, string>> };
 
 export type ToolLocalePack = { sha256: string; bytes: number } & (
   { file: string; url?: never } | { url: string; file?: never }
@@ -31,6 +40,8 @@ export type ToolManifest = {
   icon: ToolIcon;
   seo: ToolSeo;
   guide: ToolGuide;
+  /** Tool-owned reader documentation in the canonical language (English). */
+  article?: ToolArticle;
   permissions: ToolPermission[];
   assets: ToolAsset[];
   /** Verified, separately downloadable tool-owned translation packs. */

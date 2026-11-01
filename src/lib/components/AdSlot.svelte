@@ -3,8 +3,9 @@
   import { adsConfig } from '$lib/ads/settings.js';
   import { canRequestAd, requestAd } from '$lib/ads/client';
 
-  let { placement }: { placement: 'home' | 'tool' } = $props();
-  const slot = $derived(adsConfig.placements[placement]);
+  let { placement, allowed = true }: { placement: 'home' | 'tool'; allowed?: boolean } = $props();
+  // Ad placement is controlled by site configuration, independently of article rollout.
+  const slot = $derived(allowed ? adsConfig.placements[placement] : undefined);
   let element = $state<HTMLElement>();
   const testAttribute = $derived.by(() => {
     if (adsConfig.testMode) return 'on';

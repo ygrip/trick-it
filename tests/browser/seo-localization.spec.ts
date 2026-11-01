@@ -29,8 +29,14 @@ for (const locale of languageCodes) test(`${locale} platform and tool SEO is ren
   const response = await page.request.get(new URL(image!, page.url()).pathname);
   expect(response.ok()).toBe(true);
   expect((await response.body()).subarray(1, 4).toString()).toBe('PNG');
-  const schema = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);
-  expect(schema['@type']).toBe('WebApplication');
+  const schemas = (await page.locator('script[type="application/ld+json"]').allTextContents()).map(content => JSON.parse(content));
+  const schema = schemas.find(value => value['@type'] === 'WebApplication');
+  expect(schema).toBeDefined();
+  const article = jsonTool.translations?.[locale]?.article ?? jsonTool.article;
+  if (article) {
+    const faq = schemas.find(value => value['@type'] === 'FAQPage');
+    expect(faq?.mainEntity).toHaveLength(article.faq.length);
+  }
   expect(schema.softwareVersion).toBe(jsonTool.version);
   let runtimeLanguage = jsonTool.locales?.[0] ?? 'en';
   if (jsonTool.locales?.includes(locale)) runtimeLanguage = locale;

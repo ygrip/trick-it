@@ -89,7 +89,6 @@
   "nav_primary": "主导航",
   "nav_categories": "工具分类",
   "nav_legal": "法律信息",
-  "json_intro": "整理杂乱的JSON，查找需要的内容，或转换为XML，在一处轻松完成。",
   "privacy_description": "了解哪些数据留在浏览器中、工具何时联网，以及网站能看到什么。",
   "privacy_local_title": "你的工作数据通常留在浏览器中",
   "privacy_local_text": "许多工具在你的设备上编辑或转换文件，无需上传。部分可选功能需要联网。批准在线操作前，请查看各工具的说明。",

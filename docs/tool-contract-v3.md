@@ -60,7 +60,15 @@ Optional `translations[locale]` entries require localized `name` and `descriptio
 
 An entry may include `permissionReasons`, a map from already declared permission names to localized reason strings (1–240 characters). This changes consent presentation only: it cannot declare permissions, change `required`, or alter the runtime release fingerprint. Missing translated reasons use each canonical `permissions[].reason`. For example, `"permissionReasons": { "downloads": "結果を端末に保存します。" }` requires an existing `downloads` permission.
 
-Metadata localization does not translate the HTML bundle. Declare actual interface languages in optional `locales` (a nonempty unique list of supported codes, default `["en"]`), and use the runtime locale bridge described in [the runtime guide](tool-runtime.md). Unsupported interface locales use the tool's first supported language while platform navigation keeps its selected language. New localized SEO pages remain noindex pending reviewed copy.
+Metadata localization does not translate the HTML bundle. Declare actual interface languages in optional `locales` (a nonempty unique list of supported codes, default `["en"]`), and use the runtime locale bridge described in [the runtime guide](tool-runtime.md). Unsupported interface locales use the tool's first supported language while platform navigation keeps its selected language. Localized routes stay indexable while editorial translations are progressively added. Avoid implying that an English article fallback is translated.
+
+## Tool article
+
+A tool may publish reader documentation with its release: `manifest.article` (English) and `manifest.translations[locale].article` for each other language. Fields: `headings` (`about`, `features`, `limits`, `faq`), `about[]`, `features[{title,body}]`, `reference{title,sections[{heading,paragraphs[],items?[]}]}`, `example{title,paragraphs[],code?}`, `limits[]` and `faq[{question,answer}]`. Everything is plain text: paragraphs are at most 1,200 characters, titles 160, example code 4,000, and the whole article 28,000 characters. The host validates it (`src/lib/registry/article.js`), renders it below the tool and emits `FAQPage` structured data that mirrors the visible FAQ.
+
+Manifests without articles retain the 64 KiB cap. Only article-bearing manifests may use up to 256 KiB for localized article text. Catalog entries with articles receive an additional 65,536-byte gzip allowance, on top of the locale-scaled metadata budget; the largest measured existing article entry (50,280 bytes gzip) therefore has more than 30 KiB of headroom. Entries without articles retain the existing budget unchanged. These exceptions do not increase the 5 MiB tool HTML limit, 200 kB gzip bundle limit, 65,536-byte per-locale-pack limit, or shared host JavaScript budget.
+
+The article is written with Paraglide JS in the tool repository and assembled at build time; see [tool-article-guide.md](tool-article-guide.md). Tool article publication is independent of page indexing and advertising. All existing host tool routes remain eligible for indexing; pages without an article still show the functional tool and available localized interface.
 
 ## Language packs
 

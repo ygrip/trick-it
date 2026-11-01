@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
-import { localePath, SEO_LOCALES, siteOrigin } from '../src/lib/seo/metadata.js';
+import { localePath, toolIndexedLocales, SEO_LOCALES, siteOrigin } from '../src/lib/seo/metadata.js';
 import { sitemapXml, robotsText, productionOrigin } from './generate-seo.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
@@ -41,7 +41,8 @@ export async function verifySeoBuild({ root = projectRoot, requireProduction = f
       assert.ok(urls.includes(`${origin}${localePath(path, locale, base)}`), `Production sitemap is missing ${locale} ${path}`);
     }
   }
-  assert.equal(urls.length, SEO_LOCALES.length * (4 + tools.length), 'Production sitemap must include every host and tool route in every locale');
+  const expectedTools = tools.reduce((total, tool) => total + toolIndexedLocales(tool).length, 0);
+  assert.equal(urls.length, SEO_LOCALES.length * 4 + expectedTools, 'Production sitemap must include every host route in every locale and each tool in its indexed locales');
   assert.equal(new Set(urls).size, urls.length, 'Sitemap contains duplicate page URLs');
 
   // A URL is not indexable if the corresponding HTML never made it into the build.

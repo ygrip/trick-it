@@ -1,0 +1,30 @@
+# Continuation: useful, indexable tool pages
+
+## Status: unfinished; do not deploy this branch
+
+The goal is to make `tools.readynaz.com` useful, indexable, and eligible for AdSense. **The user requires each tool's guidelines and content to live in that tool's own repository**, not the host repository, and to cover all 12 supported languages using Paraglide JS. Site-wide guides and a comparison hub may live in the host repository. This branch contains **unreviewed work in progress**, not a deployable solution. Do not claim any change guarantees approval.
+
+## Important corrections
+
+- Google does not prescribe a minimum word count, FAQ schema, a particular number of articles, or a mandatory wait after sitemap submission. Usefulness, originality, policy compliance, and experience matter more than length. Do not pad text or block a release merely to meet an arbitrary word target.
+- Translated pages are not automatically duplicate or low-value content. A useful tool can be valuable with little prose. The earlier English-only indexing and ad restrictions have been removed from this WIP branch. Review actual localized page quality before making any targeted future indexing decisions; broad deindexing requires user agreement.
+- A successful sitemap status means Google read the sitemap; it does not mean its URLs are indexed or that AdSense reviewed them. AdSense may assess pages beyond a sitemap. Do not infer the reason for a rejection or compare sites' approval criteria from public HTML alone.
+- Preserve factual authorship and dates; do not assert a person wrote, reviewed, or published material without evidence. Check privacy and data-processing claims against the implementation. Changing consent or metadata alone does not fix content quality.
+
+## Resume in this order
+
+1. **Inspect the actual tool release contract and ownership.** See [ARTICLE_PROGRESS.md](ARTICLE_PROGRESS.md) for all 36 tool PRs and their exact WIP stages. The host owns platform-wide copy and the renderer; individual tools own their articles, guidelines, locale catalogs, and release manifests. Compare changes with current upstream branches and verify current Google guidance rather than treating draft heuristics as requirements.
+2. **Complete the migrated content inside each tool.** All 16 old host drafts were moved into their respective tool repositories, and the host copies were deleted. The 20 newly opened tool seed PRs contain 12-locale Paraglide catalogs derived from the tools' existing translated guides; they are not substantive article translations and are **not** wired to release manifests. The other ten tools hold unreviewed English source drafts, while the initial six already have 12-locale article implementations awaiting review. Expand and verify content within each tool before publishing; never restore tool articles to this host or edit the generated registry by hand.
+3. **Finish and localize tool content.** In each tool repository, maintain the tool's guidelines and substantive content, with accurate examples, verified inputs and outputs, errors, limitations, and source links. Use each project's Paraglide JS setup and existing verified locale-pack/release workflow to provide all 12 supported languages: English, Indonesian, Malay, Filipino, Thai, Vietnamese, Chinese, Burmese, Khmer, Lao, Japanese, and Hindi. Review translation quality and technical terms; do not claim unreviewed machine translations are verified. Publish and pin tool releases through the existing workflow, then confirm the host renders each locale's content in server HTML. Add host-wide guides and a comparison hub where supported. FAQ structured data is optional and must match visible content; validate links and escape content safely. Remove arbitrary word-count gates and unsupported publication metadata.
+4. **Review indexing and advertising deliberately.** Check canonical and `hreflang` consistency, localized routes, sitemap coverage, ad placement, navigation, and applicable consent requirements. Keep useful translations indexable unless there is an evidence-based reason and user approval to change that. Follow Google's ad-placement policies and do not promise that a route guard controls all third-party ad behavior. Test with mocked provider scripts; do not generate invalid live ad traffic.
+5. **Verify and publish.** Run relevant tests, type checks, production build and SEO validators; check generated HTML, sitemap, robots directives, accessibility and mobile navigation. Record exact results. Review the complete diff and CI. Deploy only after user review and verify public artifacts. Request AdSense review when the substantive work is ready; approval is Google's decision.
+
+## Known unfinished engineering issues
+
+- Verify the tool article component's scoped styles in its production Svelte route; avoid adding an unused duplicate of the existing `src/routes/app.css`. The earlier stylesheet conflict must be checked during full diff review.
+- The article kit has structural and size guards. Do not introduce mandatory word counts; enforce content accuracy and the actual host contract instead.
+- The twenty new article seed catalogs are not complete technical references. No tool publication should claim editor/native review or fabricated dates. Finish real guide/example/limit/FAQ content in each tool and check generated manifests before release.
+- The former article-gated tool indexing and advertising restriction was removed. All 12 tool locale routes remain in the sitemap. Confirm canonical URLs, `hreflang`, sitemap, translated tool interfaces, and ad behavior on built pages; publishing articles is a separate quality task.
+- Host CI must be rerun after this migration, locale cleanup and tests; prior green runs do not validate the current branch. Tool PRs also require their own builds, tests and review before release.
+
+Keep this PR marked WIP until implementation and verification are complete. Never include credentials, personal tax identifiers, temporary assets, or unrelated files.

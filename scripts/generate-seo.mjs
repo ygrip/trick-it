@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, mkdtemp, rename, rm, access, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { localePath, siteOrigin, SEO_LOCALES, SOCIAL_CARD_LOCALES } from '../src/lib/seo/metadata.js';
+import { localePath, siteOrigin, toolIndexedLocales, SEO_LOCALES, SOCIAL_CARD_LOCALES } from '../src/lib/seo/metadata.js';
 
 const defaultRoot = fileURLToPath(new URL('../', import.meta.url));
 export const OG_WIDTH = 1200;
@@ -75,14 +75,14 @@ function translated(tool, locale) {
   return { ...tool, name: translation?.name ?? tool.name, description: translation?.description ?? tool.description, seo: translation?.seo ?? tool.seo };
 }
 
-/** Publish every generated production route in every host locale.
+/** Publish host and tool routes in all supported locales (see `toolIndexedLocales`).
  * `images` (optional) maps `home-<locale>` / `tools/<id>-<locale>` to the social card path. */
 export function sitemapXml(tools, origin, base = '', images = {}) {
   origin = siteOrigin(origin);
   const routes = [
     { path: '/', locales: SEO_LOCALES },
     ...['privacy', 'terms', 'policy'].map((id) => ({ path: `/${id}/`, locales: SEO_LOCALES })),
-    ...tools.map((tool) => ({ path: `${tool.path}/`, image: `tools/${tool.id}`, locales: SEO_LOCALES }))
+    ...tools.map((tool) => ({ path: `${tool.path}/`, image: `tools/${tool.id}`, locales: toolIndexedLocales(tool) }))
   ];
   routes[0].image = 'home';
   const entries = origin ? routes.flatMap((route) => route.locales.map((locale) => {

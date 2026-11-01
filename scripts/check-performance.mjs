@@ -112,7 +112,8 @@ const TOOL_JS_ALLOWANCE = 1_088;
 // bounded permission reasons; shared host JavaScript is still budgeted below.
 for (const tool of catalog) {
   const entryBytes = gzipSync(JSON.stringify(tool)).length;
-  const budget = toolEntryGzipBudget(tool.locales ?? []);
+  const hasArticles = tool.article !== undefined || Object.values(tool.translations ?? {}).some(translation => translation.article !== undefined);
+  const budget = toolEntryGzipBudget(tool.locales ?? [], hasArticles);
   if (entryBytes > budget) throw new Error(`Tool "${tool.id}" catalog entry is ${entryBytes} bytes gzip, over its ${budget} byte per-tool budget`);
 }
 const budgets = { javascript: HOST_JS_BUDGET + Math.max(0, catalog.length - HOST_JS_BASELINE_TOOLS) * TOOL_JS_ALLOWANCE, css: 20_000, images: 90_000, fonts: 45_000 };

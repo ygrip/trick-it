@@ -8,6 +8,7 @@
   import ToolRuntime from '$lib/components/ToolRuntime.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import ToolArt from '$lib/components/ToolArt.svelte';
+  import ToolArticle from '$lib/components/ToolArticle.svelte';
   import { recordRecentTool } from '$lib/recent';
   import Seo from '$lib/components/Seo.svelte';
   import { localizedPath } from '$lib/i18n';
@@ -18,6 +19,7 @@
 
   let { data }: { data: PageData } = $props();
   const tool = $derived(localizedTool(data.tool, getLocale()));
+  const articleLocale = $derived(data.tool.translations?.[getLocale()]?.article ? getLocale() : 'en');
   $effect(() => recordRecentTool(data.tool.id));
 </script>
 
@@ -38,6 +40,7 @@
     <p>{m.tool_isolated()}</p>
     <a class="clay-button small" href={localizedPath('/policy/')}>{m.tool_policy_link()} <Icon name="arrow-right" size={18} /></a>
   </aside>
+  {#if tool.article}<ToolArticle article={tool.article} language={articleLocale} related={data.related} />{/if}
   {#key tool.id}<AdSlot placement="tool" />{/key}
   <noscript>{m.tool_noscript()}</noscript>
   <SiteFooter />

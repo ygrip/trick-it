@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { languageCodes } from '../src/lib/languages.js';
-import { catalogToolForLocale } from '../src/lib/registry/catalog-locale.js';
+import { catalogToolForLocale, catalogToolSummaryForLocale } from '../src/lib/registry/catalog-locale.js';
 
 test('each host locale receives its exact native metadata and no other locale dictionaries', () => {
   const translations = Object.fromEntries(languageCodes.map(locale => [locale, {
@@ -21,6 +21,18 @@ test('each host locale receives its exact native metadata and no other locale di
     for (const field of ['bundle', 'permissions', 'assets', 'locales']) assert.equal(projected[field], tool[field], field);
   }
   assert.deepEqual(Object.keys(tool.translations), languageCodes, 'projection never mutates shared SSR state');
+});
+
+test('catalog summaries omit article text without modifying tool-page content', () => {
+  const englishArticle = { about: ['English article'] };
+  const translatedArticle = { about: ['Localized article'] };
+  const tool = { id: 'fixture', article: englishArticle, translations: { id: { name: 'Localized', article: translatedArticle } } };
+
+  assert.deepEqual(catalogToolSummaryForLocale(tool, 'id'), { id: 'fixture', translations: { id: { name: 'Localized' } } });
+  assert.deepEqual(catalogToolSummaryForLocale(tool, 'en'), { id: 'fixture', translations: {} });
+  assert.equal(tool.article, englishArticle);
+  assert.equal(tool.translations.id.article, translatedArticle);
+  assert.equal(catalogToolForLocale(tool, 'id').translations.id.article, translatedArticle);
 });
 
 test('missing translated metadata retains English fallback without leaking inactive dictionaries', () => {
