@@ -5,9 +5,12 @@ import { languageCodes } from '../../src/lib/languages.js';
 // shared-JavaScript limits.
 export const MAX_TOOL_ENTRY_GZIP = 8_192;
 export const ADDITIONAL_TOOL_LOCALE_GZIP = 1_024;
+export const ARTICLE_TOOL_ENTRY_GZIP_ALLOWANCE = 65_536;
 
-export function toolEntryGzipBudget(locales) {
+export function toolEntryGzipBudget(locales, hasArticles = false) {
   const supportedLocales = new Set(locales.filter(locale => languageCodes.includes(locale)));
   const additionalLocales = Math.max(0, supportedLocales.size - 2);
-  return MAX_TOOL_ENTRY_GZIP + additionalLocales * ADDITIONAL_TOOL_LOCALE_GZIP;
+  let budget = MAX_TOOL_ENTRY_GZIP + additionalLocales * ADDITIONAL_TOOL_LOCALE_GZIP;
+  if (hasArticles) budget += ARTICLE_TOOL_ENTRY_GZIP_ALLOWANCE;
+  return budget;
 }

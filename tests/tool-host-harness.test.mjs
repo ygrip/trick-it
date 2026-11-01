@@ -98,11 +98,43 @@ for (const [name, translation, error] of [
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-for (const [name, bytes, error] of [
-  ['oversized metadata bytes', Buffer.alloc(65_537), /manifest exceeds 64 KiB/],
-  ['invalid UTF-8 metadata', Buffer.from([0xff]), /utf-8/i]
-]) test('registry and harness parser reject ' + name, () => {
-  assert.throws(() => parseManifestBytes(bytes), error);
+const articleFixture = {
+  headings: { about: 'About', features: 'Features', limits: 'Limits', faq: 'FAQ' },
+  about: ['Article introduction.'],
+  features: [{ title: 'Feature', body: 'Feature details.' }],
+  reference: { title: 'Reference', sections: [{ heading: 'Section', paragraphs: ['Reference details.'] }] },
+  example: { title: 'Example', paragraphs: ['Example details.'] },
+  limits: ['A limitation.'],
+  faq: [{ question: 'Question?', answer: 'Answer.' }]
+};
+
+test('manifest size expansion is limited to article-bearing manifests', () => {
+  const ordinary = fixtureManifest('<!doctype html>');
+  ordinary.padding = 'x'.repeat(70_000);
+  assert.throws(() => parseManifestBytes(Buffer.from(JSON.stringify(ordinary))), /manifest exceeds 64 KiB without an article/);
+
+  const article = fixtureManifest('<!doctype html>');
+  article.article = articleFixture;
+  article.padding = '';
+  const baseBytes = Buffer.byteLength(JSON.stringify(article));
+  for (const measuredSize of [170_274, 208_767]) {
+    article.padding = 'x'.repeat(measuredSize - baseBytes);
+    const measuredManifest = Buffer.from(JSON.stringify(article));
+    assert.equal(measuredManifest.length, measuredSize);
+    assert.equal(parseManifestBytes(measuredManifest).article.about[0], 'Article introduction.');
+  }
+
+  article.padding = 'x'.repeat(256 * 1024 - baseBytes);
+  const maximumManifest = Buffer.from(JSON.stringify(article));
+  assert.equal(maximumManifest.length, 256 * 1024);
+  assert.ok(parseManifestBytes(maximumManifest).article);
+
+  article.padding += 'x';
+  assert.throws(() => parseManifestBytes(Buffer.from(JSON.stringify(article))), /manifest exceeds 256 KiB/);
+});
+
+test('registry and harness parser reject invalid UTF-8 metadata', () => {
+  assert.throws(() => parseManifestBytes(Buffer.from([0xff])), /utf-8/i);
 });
 
 test('tool suites run from their own repository without a second host Playwright instance', () => {

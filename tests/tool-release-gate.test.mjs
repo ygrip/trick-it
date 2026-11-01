@@ -8,7 +8,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { languageCodes } from '../src/lib/languages.js';
 import { checkToolRelease } from '../scripts/check-tool-release.mjs';
-import { MAX_TOOL_ENTRY_GZIP, ADDITIONAL_TOOL_LOCALE_GZIP, toolEntryGzipBudget } from '../scripts/lib/performance-budgets.mjs';
+import { MAX_TOOL_ENTRY_GZIP, ADDITIONAL_TOOL_LOCALE_GZIP, ARTICLE_TOOL_ENTRY_GZIP_ALLOWANCE, toolEntryGzipBudget } from '../scripts/lib/performance-budgets.mjs';
 import { scaffoldFiles } from './scaffold-recipe.mjs';
 
 const execute = promisify(execFile);
@@ -66,6 +66,11 @@ test('catalog metadata budget scales only with distinct host-supported locales',
   assert.equal(toolEntryGzipBudget(['en', 'id', 'ja', 'ja']), MAX_TOOL_ENTRY_GZIP + ADDITIONAL_TOOL_LOCALE_GZIP);
   assert.equal(toolEntryGzipBudget([...languageCodes]), MAX_TOOL_ENTRY_GZIP + (languageCodes.length - 2) * ADDITIONAL_TOOL_LOCALE_GZIP);
   assert.equal(toolEntryGzipBudget(['en', 'id', 'not-a-host-locale']), MAX_TOOL_ENTRY_GZIP);
+  const twelveLocaleBudget = toolEntryGzipBudget([...languageCodes]);
+  const twelveLocaleArticleBudget = toolEntryGzipBudget([...languageCodes], true);
+  assert.equal(twelveLocaleArticleBudget, twelveLocaleBudget + ARTICLE_TOOL_ENTRY_GZIP_ALLOWANCE);
+  assert.ok(twelveLocaleArticleBudget >= 50_280 + 30_000, 'fits the largest measured article entry plus 30 KiB headroom');
+  assert.equal(toolEntryGzipBudget(['en', 'id'], false), MAX_TOOL_ENTRY_GZIP);
 });
 
 test('structural gate derives its complete locale set from the host', async t => {
