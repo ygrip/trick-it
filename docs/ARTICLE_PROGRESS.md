@@ -6,7 +6,7 @@ This document tracks Trick-it [host PR #110](https://github.com/ygrip/trick-it/p
 
 ## Current release progress
 
-Four tools have merged after passing their tool PR checks and exact-merge local release and browser checks: JSON Tools (`38ebda47192bb0d9d066b00fd1e8cb4db3187747`), JWT Tools (`6511fd960fa851306403987702f037579e353a7f`), Protobuf Studio (`95b769827a615531fdc0c1bc0dd73096424a88a5`), and POJO to Any (`3d031ac2f419a63a8c0fc59d4958f6f3b526452d`). Their host registrations are being updated. CSV Tools is under verification; the other tool PRs remain open. Earlier dated sections below describe historical progress, not the current merge state.
+Five tools have merged after passing their tool PR checks and exact-merge local release and browser checks: JSON Tools (`38ebda47192bb0d9d066b00fd1e8cb4db3187747`), JWT Tools (`6511fd960fa851306403987702f037579e353a7f`), Protobuf Studio (`95b769827a615531fdc0c1bc0dd73096424a88a5`), POJO to Any (`3d031ac2f419a63a8c0fc59d4958f6f3b526452d`), and CSV Tools (`872e64f427afa7f7f8beebd3e6f8bfe25ad0b0c0`). Their host registrations are being updated; the other tool PRs remain open. Earlier dated sections below describe historical progress, not the current merge state.
 
 The host now contains only the **article schema, renderer, seed/install tooling and platform-wide translations**, not editorial drafts for individual tools. All 16 earlier English host drafts were copied into their own tool repositories and removed from `docs/article-drafts/`. The one legacy tool-specific `json_intro` message was removed from all 12 host language catalogs. Generic host UI, consent, permissions, legal notices and navigation messages stay in the host.
 
