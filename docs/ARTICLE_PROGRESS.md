@@ -2,15 +2,19 @@
 
 ## Status: 36 repositories tracked, **not release-ready**
 
-This document tracks Trick-it [host PR #110](https://github.com/ygrip/trick-it/pull/110) and its 36 independent tool repositories. **Keep PR #110 open and unmerged until tool releases, native/fluent translation review, source verification, production builds, and browser checks are complete.** An article does not guarantee AdSense acceptance, and a word count is not a Google requirement.
+This document tracks Trick-it [host PR #110](https://github.com/ygrip/trick-it/pull/110) and its 36 independent tool repositories. **Keep PR #110 open until the remaining tool releases, source verification, production builds and browser checks are complete.** The user waived native-speaker review for this rollout; translations remain unverified for fluency. An article does not guarantee AdSense acceptance, and a word count is not a Google requirement.
+
+## Current release progress
+
+Four tools have merged after passing their tool PR checks and exact-merge local release and browser checks: JSON Tools (`38ebda47192bb0d9d066b00fd1e8cb4db3187747`), JWT Tools (`6511fd960fa851306403987702f037579e353a7f`), Protobuf Studio (`95b769827a615531fdc0c1bc0dd73096424a88a5`), and POJO to Any (`3d031ac2f419a63a8c0fc59d4958f6f3b526452d`). Their host registrations are being updated. CSV Tools is under verification; the other tool PRs remain open. Earlier dated sections below describe historical progress, not the current merge state.
 
 The host now contains only the **article schema, renderer, seed/install tooling and platform-wide translations**, not editorial drafts for individual tools. All 16 earlier English host drafts were copied into their own tool repositories and removed from `docs/article-drafts/`. The one legacy tool-specific `json_intro` message was removed from all 12 host language catalogs. Generic host UI, consent, permissions, legal notices and navigation messages stay in the host.
 
 **All 30 previously unfinished tools already had tool-owned catalogs for 12 interface/guide locales** before this continuation. Catalog presence is not proof of translated coverage: for example, Hex Studio's ten non-English/non-Indonesian interface catalogs still contain substantial English fallbacks. The new editorial work is a separate richer layer; both native UI localization gaps and article translations require review.
 
-## Existing six article PRs (12-language drafts; native review pending)
+## Existing six article PRs (12-language drafts; translations unverified)
 
-| Tool | Draft PR |
+| Tool | PR |
 | --- | --- |
 | `json-tools` | [#7](https://github.com/ygrip/json-tools/pull/7) |
 | `jwt-tools` | [#5](https://github.com/ygrip/jwt-tools/pull/5) |
@@ -19,7 +23,7 @@ The host now contains only the **article schema, renderer, seed/install tooling 
 | `csv-tools` | [#4](https://github.com/ygrip/csv-tools/pull/4) |
 | `hex-tools` | [#5](https://github.com/ygrip/hex-tools/pull/5) |
 
-These six already contain the Paraglide article pipeline, messages and draft manifests. Their earlier unreviewed host JSON references were also archived as `docs/editorial/unreviewed-host-draft.json` so nothing was silently discarded. **Do not replace verified tool content with an older host draft.** Recheck tests, release artifacts and technical assertions after recent commits; CSV Tools also has a separate export delimiter regression to verify.
+These six contain the Paraglide article pipeline, messages and manifests. Their earlier unreviewed host JSON references were also archived as `docs/editorial/unreviewed-host-draft.json` so nothing was silently discarded. **Do not replace verified tool content with an older host draft.** Recheck tests, release artifacts and technical assertions after recent commits; CSV Tools also has a separate export delimiter regression to verify.
 
 ## Ten tools with migrated English editorial drafts
 
