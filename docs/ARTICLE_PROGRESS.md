@@ -6,6 +6,13 @@ This document tracks Trick-it [host PR #110](https://github.com/ygrip/trick-it/p
 
 ## Current release progress
 
+**1 November cURL Studio update:** [curl-generator #4](https://github.com/ygrip/curl-generator/pull/4) is now **ready for review**, with 12 tool-owned article catalogs (38 required translated keys in each of the eleven non-English locales), compiled article publishing integration, an updated 0.2.2 manifest and bundle, and a UTF-8 request-body size regression test. [Tool Actions run #41321882730](https://github.com/ygrip/curl-generator/actions/runs/41321882730) reports a successful test job. Native-speaker fluency review and the post-merge host registry pin/browser check remain pending. Host PR #110 stays draft.
+
+**1 November review-status update:** Cron Planner #3, Fractal Studio #3, Image Compression #3, Image Converter #3, Image Editor #3 and Time Wizard #3 have been moved from draft to ready-for-review. Each has 12 article locale catalogs and published article entries; Cron Planner localization and manifest updates were committed in this continuation. Review-ready does **not** assert fresh clean build/browser verification. The remaining 12 draft tool PRs (Diff Checker, HAR Studio, Link Checker, OG Metadata Generator, Save My Wiki, SEO Checker, Who Track Me, Markdown Studio, PDF Tools, QR Bar Coder, Regex Mania and SVG Tools) still lack full article publication integration and/or translated semantic keys; do not mark them ready based on translated interface strings alone.
+
+
+**1 November continuation:** Cron Planner [#3](https://github.com/ygrip/cron-planner/pull/3) now has all 12 tool-owned article catalogs (59 matching keys each), an assembled article manifest for all 12 languages, and version metadata advanced to `0.2.2`. Indonesian terminology was corrected and locale-key parity checks tightened. Static JSON, key and numerical fidelity were checked across all catalogs. Clean reproducible build, committed release-artifact comparison and host browser checks remain unverified, so this PR stays **draft**. Background Remover [#4](https://github.com/ygrip/background-remover/pull/4) is already open for review with reported passing tool workflows. Older sections below describe earlier WIP states.
+
 Eight tools have merged after passing their tool PR checks and exact-merge local release and browser checks: JSON Tools (`38ebda47192bb0d9d066b00fd1e8cb4db3187747`), JWT Tools (`6511fd960fa851306403987702f037579e353a7f`), Protobuf Studio (`95b769827a615531fdc0c1bc0dd73096424a88a5`), POJO to Any (`3d031ac2f419a63a8c0fc59d4958f6f3b526452d`), CSV Tools (`872e64f427afa7f7f8beebd3e6f8bfe25ad0b0c0`), Hex Studio (`8928565b20ce5bc333ddf64f947fd59be25226a2`), List Studio (`71721f3c0d77d9e01655ea7aa059a9ca34dfc8ca`), and ID Generator (`1408adf6d50d9888bbc3cdba28c6e301cbede6e2`). Their host registrations are being updated; the other tool PRs remain open. Earlier dated sections below describe historical progress, not the current merge state.
 
 The host now contains only the **article schema, renderer, seed/install tooling and platform-wide translations**, not editorial drafts for individual tools. All 16 earlier English host drafts were copied into their own tool repositories and removed from `docs/article-drafts/`. The one legacy tool-specific `json_intro` message was removed from all 12 host language catalogs. Generic host UI, consent, permissions, legal notices and navigation messages stay in the host.
@@ -91,7 +98,7 @@ These ten now contain both the untouched original English research draft in `doc
 | `image-editor` | 631 | English content drafted; eleven article locales pending |
 | `list-tools` | 521 | English content drafted; eleven article locales pending |
 | `markdown-studio` | 605 | English content drafted; eleven article locales pending |
-| `pdf-tools` | 562 | English content drafted; eleven article locales pending |
+| `pdf-tools` | 562 | 12 article locales complete; assembled in PDF Tools 0.3.3 manifest; [tool PR #6](https://github.com/ygrip/pdf-tools/pull/6) under review (native fluency unverified) |
 | `qr-bar-coder` | 752 | English content drafted; eleven article locales pending |
 | `regex-mania` | 639 | English content drafted; eleven article locales pending |
 | `svg-tools` | 635 | English content drafted; eleven article locales pending |
