@@ -36,7 +36,7 @@ export function createToolRuntimeHost(getTool: () => RuntimeTool, getLocale: () 
   let pending = $state<RuntimeRequest | null>(null);
   let verificationToken = $state('');
   const pendingService = $derived(pending?.operation === 'services' ? tool.services?.find(service => service.id === (pending?.payload as { feature?: string })?.feature) : undefined);
-  const pendingInput = $derived(pendingService ? (pending?.payload as { input: { url: string; strategy: string } }).input : undefined);
+  const pendingInput = $derived(pendingService ? (pending?.payload as { input: { url?: string; strategy?: string; videoId?: string; startMs?: number; endMs?: number } }).input : undefined);
   const serviceEndpoint = (feature: string) => `${base}/api/tools/${tool.id}/${feature}`;
   let operationDialog = $state<HTMLDialogElement | null>(null);
   let operationFocus: HTMLElement | null = null;

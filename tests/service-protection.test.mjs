@@ -40,6 +40,40 @@ test('independent feature limits use server-owned keys and denial stops provider
   assert.equal((await handleService(req({},'seo-checker/other'),bindings,{...policies,'seo-checker/other':second},fetcher)).status,200);
   assert.notEqual(keys[0],keys[1]);
 });
+test('video-ingest validates input and verification before forwarding to the private binding', async () => {
+  const videoPolicy = { ...policy, toolId: 'video-clipper', feature: 'extract', handler: 'video-ingest' };
+  const videoPolicies = { 'video-clipper/extract': videoPolicy };
+  const videoInput = { videoId: 'dQw4w9WgXcQ', startMs: 0, endMs: 3000, maxHeight: 720 };
+  let calls = 0;
+  const videoEnv = { ...env, VIDEO_INGEST: { fetch: async request => {
+    calls += 1;
+    assert.equal(new URL(request.url).pathname, '/v1/extract');
+    assert.equal(request.headers.get('cf-connecting-ip'), '1.2.3.4');
+    assert.deepEqual(await request.json(), { input: videoInput });
+    return new Response(new Uint8Array([1, 2]), { headers: { 'content-type': 'application/vnd.video-clipper.bundle', 'content-length': '2' } });
+  } } };
+  const verify = async () => Response.json({ success: true, hostname: 'tools.readynaz.com', action: 'svc_audit' });
+  assert.equal((await handleService(req({ input: { ...videoInput, url: 'https://evil.example' } }, 'video-clipper/extract'), videoEnv, videoPolicies, verify)).status, 400);
+  assert.equal((await handleService(req({ input: videoInput, turnstileToken: '' }, 'video-clipper/extract'), videoEnv, videoPolicies, verify)).status, 403);
+  assert.equal(calls, 0);
+  const response = await handleService(req({ input: videoInput }, 'video-clipper/extract'), videoEnv, videoPolicies, verify);
+  assert.equal(response.status, 200);
+  assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [1, 2]);
+  assert.equal(calls, 1);
+});
+
+test('video-ingest maps source and size errors without leaking upstream details', async () => {
+  const videoPolicy = { ...policy, toolId: 'video-clipper', feature: 'resolve', handler: 'video-ingest' };
+  const videoPolicies = { 'video-clipper/resolve': videoPolicy };
+  const verify = async () => Response.json({ success: true, hostname: 'tools.readynaz.com', action: 'svc_audit' });
+  for (const [upstreamCode, expectedStatus, expectedCode] of [['source_unavailable', 422, 'source-unavailable'], ['clip_too_large', 413, 'size']]) {
+    const videoEnv = { ...env, VIDEO_INGEST: { fetch: async () => Response.json({ error: upstreamCode, secret: 'private' }, { status: 422 }) } };
+    const response = await handleService(req({ input: { videoId: 'dQw4w9WgXcQ' } }, 'video-clipper/resolve'), videoEnv, videoPolicies, verify);
+    assert.equal(response.status, expectedStatus);
+    assert.deepEqual(await response.json(), { error: expectedCode });
+  }
+});
+
 test('public config exposes no secrets and binds the currently deployed release',async()=>{
   const r=serviceConfig(new Request(`https://tools.readynaz.com/api/tools/seo-checker/audit/config?version=0.2.0&sha256=${hash}`),env,policies);
   assert.equal(r.status,200);const data=await r.json();assert.equal(data.sitekey,'public-sitekey');assert.equal(data.action,'svc_audit');assert.ok(!JSON.stringify(data).includes('test-secret'));

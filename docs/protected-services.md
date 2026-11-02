@@ -18,7 +18,7 @@ trick-it keeps browser-only tools isolated and local. Reviewed tools can opt int
 }
 ```
 
-The service list is optional; existing local tools need no changes. Each feature has its own rate-limit bucket. Two features can use different limits and Turnstile settings. Only approved immutable registrations determine deployed policies. A browser cannot disable Turnstile, raise a limit or choose a different provider URL. This release supports the host-owned `pagespeed-seo` and `tracker-audit` handlers. `tracker-audit` uses a bounded Worker page read and Google PageSpeed Insights Lighthouse network diagnostics. It does **not** scan a visitor's browser cookie jar, run a native browser extension, or execute page scripts in the Worker. Dynamic signals depend on Google Lighthouse availability; response `Set-Cookie` names never include cookie values. Other server behaviors require reviewed implementations before the schema allows them.
+The service list is optional; existing local tools need no changes. Each feature has its own rate-limit bucket. Two features can use different limits and Turnstile settings. Only approved immutable registrations determine deployed policies. A browser cannot disable Turnstile, raise a limit or choose a different provider URL. This release supports the host-owned `pagespeed-seo`, `tracker-audit` and `video-ingest` handlers. `tracker-audit` uses a bounded Worker page read and Google PageSpeed Insights Lighthouse network diagnostics. It does **not** scan a visitor's browser cookie jar, run a native browser extension, or execute page scripts in the Worker. Dynamic signals depend on Google Lighthouse availability; response `Set-Cookie` names never include cookie values. Other server behaviors require reviewed implementations before the schema allows them.
 
 ## Runtime
 
@@ -56,6 +56,12 @@ Do not deploy only static assets or run the base config when services are enable
 The `pagespeed-seo` handler also reads the approved page once (`worker/page-inspect.mjs`): the document, `/robots.txt` and `/llms.txt`, with GET only, no cookies, at most five redirects (every hop re-validated by `worker/url-target.mjs`), a 15 s timeout, a 512 kB document cap and an allow-list of reported response headers. Only extracted, bounded facts are returned; the Worker is still not a general URL proxy and the tool input shape is unchanged. The consent text tells the user that trick-it reads the page.
 
 Google's optional `PAGESPEED_API_KEY` also belongs only in the Worker secret store. Keyless shared quota may be exhausted. Turnstile does not increase Google quota or guarantee provider availability.
+
+### Video ingest
+
+`video-ingest` accepts only the fixed `resolve` and `extract` feature IDs, both with Turnstile. The host validates video ID and bounded ranges before consent and again before dispatch. After verification it calls the named `HostIngest` service binding; the browser never receives the token or signed source URLs. Extraction streams through the Worker and the host transfers a bounded binary bundle to the iframe.
+
+Deploy `video-clipper-extract` with its named `HostIngest` entrypoint and quota bindings before deploying this host configuration. Set the ingestion Worker's `QUOTA_SALT` as a secret. The host binding targets that exact Worker in the same account. A dry run does not verify the target is deployed. Keep the ingestion kill switch available and complete deployed feasibility and rights checks before general launch.
 
 ## Verification
 

@@ -37,10 +37,13 @@ export async function executeCapability(request: RuntimeRequest, ctx: Capability
       const payload = request.payload as { feature: string; input: unknown };
       const service = ctx.tool.services?.find(item => item.id === payload.feature);
       if (!service) throw new RuntimeFailure('invalid-request');
-      return { value: await runService(ctx.serviceEndpoint(service.id), {
+      const binary = service.handler === 'video-ingest' && service.id === 'extract';
+      const value = await runService(ctx.serviceEndpoint(service.id), {
         version: ctx.tool.version, sha256: ctx.tool.bundle.sha256, input: payload.input,
         ...(service.turnstile ? { turnstileToken: ctx.verificationToken } : {})
-      }, ctx.signal) };
+      }, ctx.signal, fetch, binary, service.handler === 'video-ingest');
+      if (binary && value && 'bytes' in value && value.bytes instanceof ArrayBuffer) return { value, transfer: [value.bytes] };
+      return { value };
     }
     case 'share-image': {
       const data = request.payload as { bytes: ArrayBuffer; filename: string; mime: 'image/png' };

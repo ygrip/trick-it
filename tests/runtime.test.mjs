@@ -313,6 +313,29 @@ test('SEO audit broker requires a grant and validates its narrow payload', () =>
 });
 
 
+test('video-ingest broker validates the fixed features and requires permission', () => {
+  const frame = {}; const token = 'secure-session';
+  const videoTool = { ...tool, services: [{ id: 'extract', handler: 'video-ingest' }], permissions: [{ name: 'services' }] };
+  const input = { videoId: 'dQw4w9WgXcQ', startMs: 0, endMs: 3000, maxHeight: 720 };
+  const request = { type: 'trick-it:request', version: 1, token, id: 'video-1', operation: 'services', payload: { feature: 'extract', input } };
+  const parse = (payload, grants = ['services']) => parseRuntimeRequest({ source: frame, data: { ...request, payload } }, frame, token, videoTool, grants);
+  assert.equal(parse(request.payload).error, undefined);
+  assert.equal(parse(request.payload, []).error, 'denied');
+  for (const change of [{ videoId: 'bad' }, { endMs: 180001 }, { maxHeight: 999 }, { url: 'https://evil.example' }]) {
+    assert.equal(parse({ ...request.payload, input: { ...input, ...change } }).error, 'invalid-request');
+  }
+});
+
+test('video-ingest binary results are bounded and require the bundle content type', async () => {
+  const fetcher = async () => new Response(new Uint8Array([1, 2]), { headers: { 'content-type': 'application/vnd.video-clipper.bundle' } });
+  const result = await runService('/api/tools/video-clipper/extract', {}, controller().signal, fetcher, true, true);
+  assert.deepEqual([...new Uint8Array(result.bytes)], [1, 2]);
+  await assert.rejects(runService('/api/tools/video-clipper/extract', {}, controller().signal, async () => Response.json({}), true, true), error => error.code === 'request');
+  for (const [status, code] of [[413, 'size'], [422, 'source-unavailable'], [502, 'upstream']]) {
+    await assert.rejects(runService('/api/tools/video-clipper/extract', {}, controller().signal, async () => Response.json({ error: code }, { status }), true, true), error => error.code === code);
+  }
+});
+
 test('SEO service client preserves zero scores, handles quota and aborts stale work', async () => {
   const report = { score: 0, audits: [{ id: 'document-title', score: 0 }] };
   const payload = { url: 'https://example.com/', strategy: 'mobile', locale: 'en' };

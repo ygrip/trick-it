@@ -2,6 +2,7 @@ import type { ToolService, ToolLocalePack } from '../registry/types';
 import { localePackPath } from '../registry/locale-packs.js';
 import { pruneAssetCaches, touchAssetCache } from './asset-cache.js';
 import { DOWNLOAD_LIMITS } from './download-policy';
+import { validVideoIngestInput } from '../registry/video-ingest.js';
 export type PermissionName = 'clipboard-read' | 'clipboard-write' | 'geolocation' | 'downloads' | 'camera-capture' | 'share-image' | 'external-assets' | 'wasm' | 'workers' | 'services' | 'wiki-read' | 'dns-query';
 export type RuntimePermission = { name: PermissionName; reason: string; required: boolean };
 export type RuntimeAsset = { id: string; url: string; sha256: string; bytes: number; type: 'wasm' | 'script' | 'worker' | 'data'; defer: boolean };
@@ -12,7 +13,7 @@ export type RuntimeTool = {
   translations?: Record<string, { permissionReasons?: Partial<Record<PermissionName, string>> }>;
   guide?: { summary: string; steps: string[] };
 };
-export type RuntimeErrorCode = 'request' | 'invalid-bundle' | 'integrity' | 'size' | 'invalid-asset' | 'aborted' | 'denied' | 'invalid-request' | 'busy' | 'unsupported' | 'timeout' | 'quota' | 'unavailable' | 'audit-failed' | 'verification' | 'stale-release';
+export type RuntimeErrorCode = 'request' | 'invalid-bundle' | 'integrity' | 'size' | 'invalid-asset' | 'aborted' | 'denied' | 'invalid-request' | 'busy' | 'unsupported' | 'timeout' | 'quota' | 'unavailable' | 'audit-failed' | 'verification' | 'stale-release' | 'source-unavailable' | 'upstream';
 export type CacheWarning = 'cache-unavailable' | 'cache-corrupt';
 export class RuntimeFailure extends Error {
   constructor(public code: RuntimeErrorCode, public status?: number) { super(code); this.name = 'RuntimeFailure'; }
@@ -252,8 +253,12 @@ export function parseRuntimeRequest(event: Pick<MessageEvent, 'source' | 'data'>
     if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).some(key => !['feature', 'input'].includes(key)) || typeof data.feature !== 'string' || !tool.services?.some(service => service.id === data.feature) || !data.input || typeof data.input !== 'object' || Array.isArray(data.input)) return { request, error: 'invalid-request' };
     const service = tool.services!.find(service => service.id === data.feature)!;
     const input = data.input as { url?: unknown; strategy?: unknown; locale?: unknown };
-    if (!['pagespeed-seo','tracker-audit'].includes(service.handler) || Object.keys(input).some(key => !['url', 'strategy', 'locale'].includes(key)) || typeof input.url !== 'string' || input.url.length > 2048 || !['mobile', 'desktop'].includes(input.strategy as string) || !['en', 'id'].includes(input.locale as string)) return { request, error: 'invalid-request' };
-    try { const url = new URL(input.url); if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return { request, error: 'invalid-request' }; } catch { return { request, error: 'invalid-request' }; }
+    if (service.handler === 'video-ingest') {
+      if (!validVideoIngestInput(service.id, data.input)) return { request, error: 'invalid-request' };
+    } else {
+      if (!['pagespeed-seo','tracker-audit'].includes(service.handler) || Object.keys(input).some(key => !['url', 'strategy', 'locale'].includes(key)) || typeof input.url !== 'string' || input.url.length > 2048 || !['mobile', 'desktop'].includes(input.strategy as string) || !['en', 'id'].includes(input.locale as string)) return { request, error: 'invalid-request' };
+      try { const url = new URL(input.url); if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return { request, error: 'invalid-request' }; } catch { return { request, error: 'invalid-request' }; }
+    }
     try { if (JSON.stringify(data.input).length > 4096) return { request, error: 'invalid-request' }; }
     catch { return { request, error: 'invalid-request' }; }
   }
@@ -278,7 +283,7 @@ function validDownloadFile(data: { filename?: unknown; mime?: unknown }) {
 }
 
 /** Same-origin, fixed-provider service. The sandbox never receives network access. */
-export async function runService(endpoint: string, payload: unknown, signal: AbortSignal, fetcher: typeof fetch = fetch) {
+export async function runService(endpoint: string, payload: unknown, signal: AbortSignal, fetcher: typeof fetch = fetch, binary = false, video = false) {
   checkAbort(signal);
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -287,13 +292,28 @@ export async function runService(endpoint: string, payload: unknown, signal: Abo
   try {
     const response = await fetcher(endpoint, { method: 'POST', credentials: 'omit', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal });
     if (!response.ok) {
+      if (video && [413, 422, 502].includes(response.status)) {
+        await response.body?.cancel();
+        if (response.status === 413) throw new RuntimeFailure('size', response.status);
+        if (response.status === 422) throw new RuntimeFailure('source-unavailable', response.status);
+        throw new RuntimeFailure('upstream', response.status);
+      }
       // Only a Turnstile rejection is a verification failure; other 403s are request errors.
       let code: unknown;
       if (response.status === 403) { try { code = (JSON.parse(new TextDecoder().decode(await readBounded(response, 1024, controller.signal))) as { error?: unknown })?.error; } catch { code = undefined; } }
       await response.body?.cancel().catch(() => undefined);
       throw new RuntimeFailure(response.status === 429 ? 'quota' : response.status === 403 ? (code === 'verification' ? 'verification' : 'request') : response.status === 409 ? 'stale-release' : response.status === 504 ? 'timeout' : response.status === 400 ? 'invalid-request' : response.status === 503 ? 'unavailable' : 'audit-failed', response.status);
     }
-    const data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await readBounded(response, 512 * 1024, controller.signal)));
+    if (binary) {
+      if (response.headers.get('content-type')?.split(';')[0].trim() !== 'application/vnd.video-clipper.bundle') throw new RuntimeFailure('request');
+      const bytes = await readBounded(response, 160 * 1024 * 1024, controller.signal);
+      if (bytes.byteLength === 0) throw new RuntimeFailure('request');
+      checkAbort(signal);
+      return { bytes: bytes.buffer };
+    }
+    let maxJsonBytes = 512 * 1024;
+    if (video) maxJsonBytes = 4 * 1024 * 1024;
+    const data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await readBounded(response, maxJsonBytes, controller.signal)));
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new RuntimeFailure('request');
     checkAbort(signal);
     return data;
