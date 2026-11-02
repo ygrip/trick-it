@@ -290,6 +290,18 @@ test('download payloads are bounded and cannot contain paths or executable host 
   assert.equal(parse({ ...payload, mime: 'application/javascript' }).error, 'invalid-request');
 });
 
+test('video exports may be MP4 or WebM, streamed or inline, and other video types stay rejected', () => {
+  const frame = {}; const fixture = { ...tool, permissions: [{ name: 'downloads' }] };
+  const send = (operation, payload) => parseRuntimeRequest({ source: frame, data: { type: 'trick-it:request', version: 1, token: 'channel', id: '1', operation, payload } }, frame, 'channel', fixture, ['downloads']);
+  for (const [filename, mime] of [['clip.mp4', 'video/mp4'], ['clip.webm', 'video/webm']]) {
+    assert.equal(send('download-begin', { filename, mime, size: 100 * 1024 * 1024 }).error, undefined, mime + ' stream');
+    assert.equal(send('downloads', { filename, mime, bytes: new ArrayBuffer(8) }).error, undefined, mime + ' inline');
+  }
+  for (const mime of ['video/quicktime', 'video/x-matroska', 'video/mp4; codecs="avc1"', 'video/']) {
+    assert.equal(send('download-begin', { filename: 'clip.mp4', mime, size: 8 }).error, 'invalid-request', mime);
+  }
+});
+
 test('SEO audit broker requires a grant and validates its narrow payload', () => {
   const frame = {}; const token = 'secure-session';
   const seoTool = { ...tool, services: [{ id: 'audit', handler: 'pagespeed-seo' }], permissions: [{ name: 'services', required: true, reason: 'Audit a public page with Google' }] };
