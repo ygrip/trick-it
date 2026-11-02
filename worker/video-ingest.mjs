@@ -11,6 +11,7 @@ async function handleIngestFailure(response) {
     return json({ error: 'upstream' }, 502);
   }
   if (code === 'clip_too_large') return json({ error: 'size' }, 413);
+  if (code === 'source_blocked') return json({ error: 'source-blocked' }, 503);
   if (response.status === 422) return json({ error: 'source-unavailable' }, 422);
   if (response.status === 429) return json({ error: 'rate-limit' }, 429);
   if (response.status === 400) return json({ error: 'invalid-request' }, 400);

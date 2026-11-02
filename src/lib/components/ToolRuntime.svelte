@@ -16,7 +16,7 @@
   let zoomPercent = $state<number>(TOOL_ZOOM.default);
   const host = createToolRuntimeHost(() => tool, () => locale, () => zoomPercent, (percent) => (zoomPercent = percent));
   function failureMessage(code: NonNullable<typeof host.failure>['code']) {
-    if (code === 'source-unavailable') return text.errors.unavailable;
+    if (code === 'source-unavailable' || code === 'source-blocked') return text.errors.unavailable;
     if (code === 'upstream') return text.errors['audit-failed'];
     return text.errors[code];
   }

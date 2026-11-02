@@ -13,7 +13,7 @@ export type RuntimeTool = {
   translations?: Record<string, { permissionReasons?: Partial<Record<PermissionName, string>> }>;
   guide?: { summary: string; steps: string[] };
 };
-export type RuntimeErrorCode = 'request' | 'invalid-bundle' | 'integrity' | 'size' | 'invalid-asset' | 'aborted' | 'denied' | 'invalid-request' | 'busy' | 'unsupported' | 'timeout' | 'quota' | 'unavailable' | 'audit-failed' | 'verification' | 'stale-release' | 'source-unavailable' | 'upstream';
+export type RuntimeErrorCode = 'request' | 'invalid-bundle' | 'integrity' | 'size' | 'invalid-asset' | 'aborted' | 'denied' | 'invalid-request' | 'busy' | 'unsupported' | 'timeout' | 'quota' | 'unavailable' | 'audit-failed' | 'verification' | 'stale-release' | 'source-unavailable' | 'source-blocked' | 'upstream';
 export type CacheWarning = 'cache-unavailable' | 'cache-corrupt';
 export class RuntimeFailure extends Error {
   constructor(public code: RuntimeErrorCode, public status?: number) { super(code); this.name = 'RuntimeFailure'; }
@@ -300,8 +300,9 @@ export async function runService(endpoint: string, payload: unknown, signal: Abo
       }
       // Only a Turnstile rejection is a verification failure; other 403s are request errors.
       let code: unknown;
-      if (response.status === 403) { try { code = (JSON.parse(new TextDecoder().decode(await readBounded(response, 1024, controller.signal))) as { error?: unknown })?.error; } catch { code = undefined; } }
+      if (response.status === 403 || (video && response.status === 503)) { try { code = (JSON.parse(new TextDecoder().decode(await readBounded(response, 1024, controller.signal))) as { error?: unknown })?.error; } catch { code = undefined; } }
       await response.body?.cancel().catch(() => undefined);
+      if (video && response.status === 503 && code === 'source-blocked') throw new RuntimeFailure('source-blocked', response.status);
       throw new RuntimeFailure(response.status === 429 ? 'quota' : response.status === 403 ? (code === 'verification' ? 'verification' : 'request') : response.status === 409 ? 'stale-release' : response.status === 504 ? 'timeout' : response.status === 400 ? 'invalid-request' : response.status === 503 ? 'unavailable' : 'audit-failed', response.status);
     }
     if (binary) {

@@ -331,7 +331,7 @@ test('video-ingest binary results are bounded and require the bundle content typ
   const result = await runService('/api/tools/video-clipper/extract', {}, controller().signal, fetcher, true, true);
   assert.deepEqual([...new Uint8Array(result.bytes)], [1, 2]);
   await assert.rejects(runService('/api/tools/video-clipper/extract', {}, controller().signal, async () => Response.json({}), true, true), error => error.code === 'request');
-  for (const [status, code] of [[413, 'size'], [422, 'source-unavailable'], [502, 'upstream']]) {
+  for (const [status, code] of [[413, 'size'], [422, 'source-unavailable'], [502, 'upstream'], [503, 'source-blocked']]) {
     await assert.rejects(runService('/api/tools/video-clipper/extract', {}, controller().signal, async () => Response.json({ error: code }, { status }), true, true), error => error.code === code);
   }
 });
