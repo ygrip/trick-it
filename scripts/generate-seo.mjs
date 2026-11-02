@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rename, rm, access, readdir } from
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { localePath, siteOrigin, toolIndexedLocales, SEO_LOCALES, SOCIAL_CARD_LOCALES } from '../src/lib/seo/metadata.js';
+import { validateAdsConfig } from '../src/lib/ads/config.js';
 
 const defaultRoot = fileURLToPath(new URL('../', import.meta.url));
 export const OG_WIDTH = 1200;
@@ -101,6 +102,21 @@ export function robotsText(origin, base = '') {
   return origin ? `User-agent: *\nAllow: /\nSitemap: ${origin}${base}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n';
 }
 
+/** Google's fixed certification authority ID for AdSense seller lines. */
+const GOOGLE_ADS_TXT_CERTIFICATION_ID = 'f08c47fec0942fa0';
+
+/** ads.txt derived from config/ads.json, so the seller line always matches the publisher ID in use. */
+export function adsTxt(config) {
+  const ads = validateAdsConfig(config);
+  if (!ads.enabled) return '# Advertising is disabled; no authorized sellers.\n';
+  const publisherId = ads.client.replace(/^ca-/, '');
+  return `google.com, ${publisherId}, DIRECT, ${GOOGLE_ADS_TXT_CERTIFICATION_ID}\n`;
+}
+
+async function readAdsConfig(root) {
+  return JSON.parse(await readFile(join(root, 'config/ads.json'), 'utf8'));
+}
+
 /** Build from approved catalog metadata; never fetch a tool-supplied asset. */
 export async function generateSeo({ root = defaultRoot, origin = process.env.PUBLIC_SITE_URL || '', base = '', renderer } = {}) {
   origin = siteOrigin(origin);
@@ -165,6 +181,7 @@ export async function generateSeo({ root = defaultRoot, origin = process.env.PUB
     await rm(output, { recursive: true, force: true });
     await rename(staging, output);
     await writeFile(join(staticRoot, 'robots.txt'), robotsText(origin, base));
+    await writeFile(join(staticRoot, 'ads.txt'), adsTxt(await readAdsConfig(root)));
     await writeFile(join(staticRoot, 'sitemap.xml'), sitemapXml(tools, origin, base, images));
     const generated = join(root, 'src/lib/seo');
     await mkdir(generated, { recursive: true });

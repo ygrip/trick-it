@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { validateAdsConfig, hostFramePolicy } from '../src/lib/ads/config.js';
+import { adsTxt } from '../scripts/generate-seo.mjs';
 
 test('browser specs use the shared advertising-isolation fixture', async () => {
   const directory = new URL('./browser/', import.meta.url);
@@ -60,4 +61,10 @@ for (const origin of ['https:', '*', 'http://ads.example', 'https://example.com/
 test('advertising frame origins are bounded and deduplicated', () => {
   assert.throws(() => validateAdsConfig({ ...enabled, frameOrigins: Array(17).fill('https://ads.example') }), /at most 16/);
   assert.deepEqual(validateAdsConfig({ ...enabled, frameOrigins: ['https://ads.example', 'https://ads.example'] }).frameOrigins, ['https://ads.example']);
+});
+
+test('ads.txt lists the configured Google publisher only while ads are enabled', () => {
+  assert.equal(adsTxt(enabled), 'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');
+  assert.equal(adsTxt({ ...enabled, enabled: false }), '# Advertising is disabled; no authorized sellers.\n');
+  assert.throws(() => adsTxt({ ...enabled, client: '' }), /require ads.client/);
 });

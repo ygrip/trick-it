@@ -4,10 +4,11 @@ import { mkdtemp, mkdir, writeFile, rm, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { verifySeoBuild } from '../scripts/verify-seo.mjs';
-import { sitemapXml, robotsText } from '../scripts/generate-seo.mjs';
+import { sitemapXml, robotsText, adsTxt } from '../scripts/generate-seo.mjs';
 import { languageCodes } from '../src/lib/languages.js';
 
 const origin = 'https://tools.example';
+const adsConfig = JSON.stringify({ enabled: true, client: 'ca-pub-1234567890123456', placements: { home: '1234567890' }, frameOrigins: ['https://googleads.g.doubleclick.net'] });
 
 async function fixture(site = origin, tools = []) {
   const root = await mkdtemp(join(tmpdir(), 'trick-it-seo-build-'));
@@ -21,6 +22,8 @@ async function fixture(site = origin, tools = []) {
   await save('src/lib/seo/generated.json', JSON.stringify({ origin: site, base: '', images: {} }));
   await save('build/sitemap.xml', sitemapXml(tools, site));
   await save('build/robots.txt', robotsText(site));
+  await save('config/ads.json', adsConfig);
+  await save('build/ads.txt', adsTxt(JSON.parse(adsConfig)));
 
   if (site) {
     for (const url of sitemapXml(tools, site).matchAll(/<loc>([^<]+)<\/loc>/g)) {

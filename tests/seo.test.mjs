@@ -122,6 +122,8 @@ test('generation writes cache-busted social cards and config, keeping a tool nam
   try {
     await mkdir(join(root, 'src/lib/registry'), { recursive: true });
     await mkdir(join(root, 'messages'), { recursive: true });
+    await mkdir(join(root, 'config'), { recursive: true });
+    await writeFile(join(root, 'config/ads.json'), JSON.stringify({ enabled: true, client: 'ca-pub-1234567890123456', placements: { home: '1234567890' }, frameOrigins: ['https://googleads.g.doubleclick.net'] }));
     await writeFile(join(root, 'src/lib/registry/generated.json'), JSON.stringify([tool, { ...tool, id: 'home', path: '/home', name: 'Home tool' }]));
     for (const locale of languageCodes) await writeFile(join(root, `messages/${locale}.json`), JSON.stringify({ home_title: `trick-it ${locale}`, home_description: 'Local utilities.' }));
     // The production renderer is Resvg. This deterministic byte renderer keeps the
@@ -142,6 +144,7 @@ test('generation writes cache-busted social cards and config, keeping a tool nam
     assert.equal(configuration.origin, origin);
     assert.equal(configuration.base, '');
     assert.deepEqual(configuration.images, result.images);
+    assert.equal(await readFile(join(root, 'static/ads.txt'), 'utf8'), 'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');
     const sitemap = await readFile(join(root, 'static/sitemap.xml'), 'utf8');
     assert.equal([...sitemap.matchAll(/<loc>/g)].length, languageCodes.length * 6);
     assert.ok(sitemap.includes(`${origin}${localePath('/home/', 'en')}`));

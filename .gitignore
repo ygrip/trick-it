@@ -17,6 +17,7 @@ src/lib/seo/generated.json
 static/og/
 static/.og-*/
 static/robots.txt
+static/ads.txt
 static/sitemap.xml
 
 # Local agent skills (not published)

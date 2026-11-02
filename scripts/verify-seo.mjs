@@ -4,18 +4,20 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { localePath, toolIndexedLocales, SEO_LOCALES, siteOrigin } from '../src/lib/seo/metadata.js';
-import { sitemapXml, robotsText, productionOrigin } from './generate-seo.mjs';
+import { sitemapXml, robotsText, adsTxt, productionOrigin } from './generate-seo.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 
 /** Check the *deployed artifact*, not only files produced before Vite runs. */
 export async function verifySeoBuild({ root = projectRoot, requireProduction = false } = {}) {
   const read = (name) => readFile(join(root, name), 'utf8');
-  const [metadata, tools, sitemap, robots] = await Promise.all([
+  const [metadata, tools, sitemap, robots, ads, adsConfig] = await Promise.all([
     read('src/lib/seo/generated.json').then(JSON.parse),
     read('src/lib/registry/generated.json').then(JSON.parse),
     read('build/sitemap.xml'),
-    read('build/robots.txt')
+    read('build/robots.txt'),
+    read('build/ads.txt'),
+    read('config/ads.json').then(JSON.parse)
   ]);
   const origin = siteOrigin(metadata.origin);
   const base = metadata.base ?? '';
@@ -28,6 +30,7 @@ export async function verifySeoBuild({ root = projectRoot, requireProduction = f
 
   assert.equal(sitemap, sitemapXml(tools, origin, base, metadata.images), 'Published sitemap does not match the verified registry');
   assert.equal(robots, robotsText(origin, base), 'Published robots.txt disagrees with sitemap / origin');
+  assert.equal(ads, adsTxt(adsConfig), 'Published ads.txt disagrees with config/ads.json');
 
   if (!origin) {
     assert.ok(!sitemap.includes('<loc>'), 'Preview sitemap must not advertise indexable URLs');

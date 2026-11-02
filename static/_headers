@@ -5,6 +5,9 @@
 /robots.txt
   Content-Type: text/plain; charset=utf-8
   Cache-Control: public, max-age=300, must-revalidate
+/ads.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=300, must-revalidate
 
 # The release probe and worker script are mutable aliases. Never make browsers
 # or intermediary caches hold a previous deployment's update metadata.
