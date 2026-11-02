@@ -1,12 +1,12 @@
 import { expect, test, type Frame, type Page } from './fixtures';
 import { mountFixture, toolFrame } from './runtime-fixture';
 
-async function start(page: Page) {
-  await page.route('**/api/tools/runtime-fixture/audit/config?*', route => route.fulfill({ json: { sitekey: 'public-sitekey', action: 'svc_fixture', turnstile: true, rateLimit: { limit: 5, periodSeconds: 60 } } }));
+async function start(page: Page, feature = 'audit', handler = 'pagespeed-seo') {
+  await page.route(`**/api/tools/runtime-fixture/${feature}/config?*`, route => route.fulfill({ json: { sitekey: 'public-sitekey', action: 'svc_fixture', turnstile: true, rateLimit: { limit: 5, periodSeconds: 60 } } }));
   await page.route('https://challenges.cloudflare.com/turnstile/v0/api.js?*', route => route.fulfill({ contentType: 'application/javascript', body: `window.__turnstileCount=0;window.turnstile={render(container,options){window.__turnstileOptions=options;window.__turnstileContainer=container;const button=document.createElement('button');button.textContent='Verify test';button.onclick=()=>options.callback('test-token-'+(++window.__turnstileCount));container.append(button);return 'widget';},remove(){window.__turnstileContainer?.replaceChildren();},reset(){}};` }));
   await mountFixture(page, {
     permissions: [{ name: 'services', reason: 'Use the test service.', required: true }],
-    services: [{ id: 'audit', handler: 'pagespeed-seo', rateLimit: { limit: 5, periodSeconds: 60 }, turnstile: true }]
+    services: [{ id: feature, handler, rateLimit: { limit: 5, periodSeconds: 60 }, turnstile: true }]
   });
   await expect(page.frameLocator('.runtime-workspace > iframe').getByRole('heading', { name: 'Runtime fixture' })).toBeVisible();
   return await toolFrame(page);
@@ -36,6 +36,27 @@ test('service consent sends the declared release and token only after verificati
   await page.getByRole('button', { name: 'Verify test', exact: true }).click();
   await allow.click();
   expect(await pending).toEqual({ result: 'provider response' });
+  expect(calls).toBe(1);
+});
+
+test('video extraction requires consent and transfers a binary bundle', async ({ page }) => {
+  let calls = 0;
+  await page.route('**/api/tools/runtime-fixture/extract', async route => {
+    calls++;
+    expect(route.request().postDataJSON()).toMatchObject({ input: { videoId: 'dQw4w9WgXcQ', startMs: 0, endMs: 3000, maxHeight: 720 }, turnstileToken: 'test-token-1' });
+    await route.fulfill({ contentType: 'application/vnd.video-clipper.bundle', body: Buffer.from([1, 2, 3]) });
+  });
+  const frame = await start(page, 'extract', 'video-ingest');
+  const pending = frame.evaluate(async () => {
+    const sdk = (window as unknown as { trickIt: { request: (operation: string, payload: unknown) => Promise<{ bytes: ArrayBuffer }> } }).trickIt;
+    const result = await sdk.request('services', { feature: 'extract', input: { videoId: 'dQw4w9WgXcQ', startMs: 0, endMs: 3000, maxHeight: 720 } });
+    return [...new Uint8Array(result.bytes)];
+  });
+  await expect(page.getByRole('dialog').getByText(/YouTube: dQw4w9WgXcQ/)).toBeVisible();
+  expect(calls).toBe(0);
+  await page.getByRole('button', { name: 'Verify test', exact: true }).click();
+  await page.getByRole('button', { name: 'Allow', exact: true }).click();
+  expect(await pending).toEqual([1, 2, 3]);
   expect(calls).toBe(1);
 });
 

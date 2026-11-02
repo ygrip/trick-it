@@ -1,5 +1,7 @@
 import { handleAudit, validateTarget, readJson, json, AuditFailure } from './seo-audit.mjs';
 import { handleTrackerAudit } from './tracker-audit.mjs';
+import { handleVideoIngest } from './video-ingest.mjs';
+import { validVideoIngestInput } from '../src/lib/registry/video-ingest.js';
 const route = /^\/api\/tools\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\/(config))?$/;
 function policyFor(request, policies) {
   const match = new URL(request.url).pathname.match(route);
@@ -39,14 +41,19 @@ export async function handleService(request, env, policies, fetcher = fetch) {
     if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).some(key=>!['version','sha256','input','turnstileToken'].includes(key))) return json({error:'invalid-request'},400);
     if (body.version !== policy.version || body.sha256 !== policy.sha256) return json({error:'stale-release'},409);
     // Input is handler-specific, and validation happens before any network call.
-    if (!['pagespeed-seo','tracker-audit'].includes(policy.handler) || !body.input || typeof body.input !== 'object' || Array.isArray(body.input) || Object.keys(body.input).some(key=>!['url','strategy','locale'].includes(key)) || !['mobile','desktop'].includes(body.input.strategy) || !['en','id'].includes(body.input.locale)) return json({error:'invalid-request'},400);
-    validateTarget(body.input.url);
+    if (policy.handler === 'video-ingest') {
+      if (!policy.turnstile || !validVideoIngestInput(policy.feature, body.input)) return json({error:'invalid-request'},400);
+    } else {
+      if (!['pagespeed-seo','tracker-audit'].includes(policy.handler) || !body.input || typeof body.input !== 'object' || Array.isArray(body.input) || Object.keys(body.input).some(key=>!['url','strategy','locale'].includes(key)) || !['mobile','desktop'].includes(body.input.strategy) || !['en','id'].includes(body.input.locale)) return json({error:'invalid-request'},400);
+      validateTarget(body.input.url);
+    }
     const ip = request.headers.get('cf-connecting-ip');
     if (!ip || !env.SERVICE_ATTEMPT_LIMITER || !env[policy.binding] || (policy.turnstile && (!env.TURNSTILE_SECRET || !env.TURNSTILE_HOSTNAMES))) return json({error:'unavailable'},503);
     if (!(await env.SERVICE_ATTEMPT_LIMITER.limit({key:`services:${ip}`})).success) return json({error:'rate-limit'},429);
     if (policy.turnstile && !(await verifyTurnstile(body.turnstileToken,request,env,policy,fetcher))) return json({error:'verification'},403);
     const key = `${policy.toolId}/${policy.feature}:${ip}`;
     if (!(await env[policy.binding].limit({key})).success) return json({error:'rate-limit'},429);
+    if (policy.handler === 'video-ingest') return await handleVideoIngest(policy.feature, body.input, ip, env, request.signal);
     if (policy.handler === 'tracker-audit') return handleTrackerAudit(body.input,env,fetcher);
     return handleAudit(new Request(request.url,{method:'POST',headers:request.headers,body:JSON.stringify(body.input)}),env,fetcher);
   } catch (error) {

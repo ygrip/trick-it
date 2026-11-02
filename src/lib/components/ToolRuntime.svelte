@@ -15,6 +15,11 @@
   const text = $derived(runtimeStrings(locale));
   let zoomPercent = $state<number>(TOOL_ZOOM.default);
   const host = createToolRuntimeHost(() => tool, () => locale, () => zoomPercent, (percent) => (zoomPercent = percent));
+  function failureMessage(code: NonNullable<typeof host.failure>['code']) {
+    if (code === 'source-unavailable') return text.errors.unavailable;
+    if (code === 'upstream') return text.errors['audit-failed'];
+    return text.errors[code];
+  }
   function permissionReason(permission: RuntimePermission) {
     return tool.translations?.[locale]?.permissionReasons?.[permission.name] ?? permission.reason;
   }
@@ -68,7 +73,7 @@
       {#if host.permissions.length}<button class="clay-button small revoke" type="button" onclick={host.resetAccess} aria-label={text.revoke} title={text.revoke}><Icon name="lock" size={16} /><span>{text.revokeShort}</span></button>{/if}
     </div>
     {#if host.failure || host.timedOut}
-      <div class="load-state"><ClayStatus state="error" title={text.failed} detail={`${host.timedOut ? text.timeout : text.errors[host.failure!.code]}${host.failure?.status ? ` (${host.failure?.status})` : ''}`}><button class="clay-button small" type="button" onclick={host.startTool}>{text.retry}</button></ClayStatus></div>
+      <div class="load-state"><ClayStatus state="error" title={text.failed} detail={`${host.timedOut ? text.timeout : failureMessage(host.failure!.code)}${host.failure?.status ? ` (${host.failure?.status})` : ''}`}><button class="clay-button small" type="button" onclick={host.startTool}>{text.retry}</button></ClayStatus></div>
     {:else if host.frameDocument}
       <iframe bind:this={host.frame} title={tool.name} srcdoc={host.frameDocument} sandbox="allow-scripts" allow="camera 'none'; microphone 'none'; geolocation 'none'; clipboard-read 'none'; clipboard-write 'none'" referrerpolicy="no-referrer" style:height={`${host.frameHeight}px`} onload={host.syncFrame}></iframe>
     {:else if host.loading}
@@ -87,7 +92,7 @@
   </div>
 {/if}
 {#if host.warning}<p class="runtime-notice" role="status">{host.warning === 'cache-corrupt' ? text.corruptWarning : text.cachedWarning}</p>{/if}
-{#if host.assetFailure}<div class="runtime-notice" role="alert"><p>{text.errors[host.assetFailure.code]}</p>{#if host.failedAsset}<button class="clay-button small" type="button" onclick={host.retryAssetDownload}>{text.retryAsset}</button>{/if}</div>{/if}
+{#if host.assetFailure}<div class="runtime-notice" role="alert"><p>{failureMessage(host.assetFailure.code)}</p>{#if host.failedAsset}<button class="clay-button small" type="button" onclick={host.retryAssetDownload}>{text.retryAsset}</button>{/if}</div>{/if}
 {#if host.recoveredAsset}<p class="runtime-notice" role="status">{text.assetReady}</p>{/if}
 
 <dialog bind:this={host.operationDialog} class="operation-dialog surface" aria-labelledby="runtime-operation-title" oncancel={(event) => { event.preventDefault(); host.denyPending(); }}>
@@ -96,7 +101,15 @@
     <p><strong>{tool.name}: {text.labels[(host.pending.operation === 'download-begin' ? 'downloads' : host.pending.operation) as keyof typeof text.labels]}</strong></p>
     <p>{host.pendingAsk ? text.rememberHelp : text.confirmHelp}</p>
     {#if pendingReason}<p>{pendingReason}</p>{/if}
-    {#if host.pendingService && host.pendingInput}<p>{host.pendingService.handler === 'tracker-audit' ? text.trackerHelp : text.seoHelp}</p><pre>{host.pendingInput.url}</pre><p>{host.pendingInput.strategy === 'mobile' ? text.seoMobile : text.seoDesktop} · {text.serviceLimit}: {host.pendingService.rateLimit.limit} / {host.pendingService.rateLimit.periodSeconds}s</p>{#if host.pendingService.turnstile}<ServiceChallenge endpoint={host.serviceEndpoint(host.pendingService.id)} version={tool.version} sha256={tool.bundle.sha256} {locale} onToken={(token) => host.verificationToken = token} />{/if}{/if}
+    {#if host.pendingService && host.pendingInput}
+      {#if host.pendingService.handler === 'video-ingest'}
+        <pre>YouTube: {host.pendingInput.videoId}{#if host.pendingService.id === 'extract'} · {host.pendingInput.startMs}–{host.pendingInput.endMs} ms{/if}</pre>
+      {:else}
+        <p>{host.pendingService.handler === 'tracker-audit' ? text.trackerHelp : text.seoHelp}</p><pre>{host.pendingInput.url}</pre><p>{host.pendingInput.strategy === 'mobile' ? text.seoMobile : text.seoDesktop}</p>
+      {/if}
+      <p>{text.serviceLimit}: {host.pendingService.rateLimit.limit} / {host.pendingService.rateLimit.periodSeconds}s</p>
+      {#if host.pendingService.turnstile}<ServiceChallenge endpoint={host.serviceEndpoint(host.pendingService.id)} version={tool.version} sha256={tool.bundle.sha256} {locale} onToken={(token) => host.verificationToken = token} />{/if}
+    {/if}
     {#if host.pending.operation === 'clipboard-write'}<pre>{(host.pending.payload as string).slice(0, 240)}</pre>{/if}
     {#if host.pending.operation === 'dns-query'}<p>{text.dnsHelp}</p>{/if}
     {#if host.pending.operation === 'wiki-read'}<p>{text.wikiHelp}</p><pre>{(host.pending.payload as WikiReadRequest).site}

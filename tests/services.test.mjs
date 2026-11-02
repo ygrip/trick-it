@@ -23,4 +23,13 @@ test('service compilation creates deterministic isolated authoritative policies 
   assert.equal(result.policies['seo-checker/audit'].sha256, manifest.bundle.sha256);
 });
 
+test('video-ingest only permits fixed features with Turnstile', () => {
+  for (const id of ['resolve', 'extract']) {
+    const video = { ...service, id, handler: 'video-ingest' };
+    assert.equal(validateManifest({ ...manifest, services: [video] }).services[0].id, id);
+    assert.throws(() => validateManifest({ ...manifest, services: [{ ...video, turnstile: false }] }));
+  }
+  assert.throws(() => validateManifest({ ...manifest, services: [{ ...service, id: 'other', handler: 'video-ingest' }] }));
+});
+
 test('tracker-audit is a reviewed fixed handler and cannot register arbitrary endpoints',()=>{const audit={...service,handler:'tracker-audit'};assert.equal(validateManifest({...manifest,services:[audit]}).services[0].handler,'tracker-audit');assert.throws(()=>validateManifest({...manifest,services:[{...audit,handler:'https://evil.example'}]}));});

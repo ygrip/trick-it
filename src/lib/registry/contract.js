@@ -127,7 +127,8 @@ export function validateManifest(manifest) {
   const serviceIds = new Set();
   const services = serviceInput.map(entry => {
     object(entry, 'service');
-    if (Object.keys(entry).some(key => !['id', 'handler', 'rateLimit', 'turnstile'].includes(key)) || typeof entry.id !== 'string' || !safeId.test(entry.id) || entry.id.length > 32 || serviceIds.has(entry.id) || !['pagespeed-seo','tracker-audit'].includes(entry.handler) || typeof entry.turnstile !== 'boolean') throw new Error('invalid service');
+    if (Object.keys(entry).some(key => !['id', 'handler', 'rateLimit', 'turnstile'].includes(key)) || typeof entry.id !== 'string' || !safeId.test(entry.id) || entry.id.length > 32 || serviceIds.has(entry.id) || !['pagespeed-seo','tracker-audit','video-ingest'].includes(entry.handler) || typeof entry.turnstile !== 'boolean') throw new Error('invalid service');
+    if (entry.handler === 'video-ingest' && (!['resolve', 'extract'].includes(entry.id) || entry.turnstile !== true)) throw new Error('invalid video-ingest service');
     object(entry.rateLimit, 'service rate limit');
     const { limit, periodSeconds } = entry.rateLimit;
     if (Object.keys(entry.rateLimit).some(key => !['limit', 'periodSeconds'].includes(key)) || !Number.isInteger(limit) || limit < 1 || limit > 60 || ![10, 60].includes(periodSeconds)) throw new Error('invalid service rate limit');

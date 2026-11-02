@@ -17,6 +17,9 @@
     }
   ],
   "main": "worker/index.mjs",
+  "services": [
+    { "binding": "VIDEO_INGEST", "service": "video-clipper-extract", "entrypoint": "HostIngest" }
+  ],
   "ratelimits": [
     {
       "name": "SERVICE_ATTEMPT_LIMITER",
