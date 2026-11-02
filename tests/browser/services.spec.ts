@@ -60,6 +60,23 @@ test('video extraction requires consent and transfers a binary bundle', async ({
   expect(calls).toBe(1);
 });
 
+test('video bot-block errors reach the tool without looking like a paused service', async ({ page }) => {
+  await page.route('**/api/tools/runtime-fixture/extract', route => route.fulfill({ status: 503, json: { error: 'source-blocked' } }));
+  const frame = await start(page, 'extract', 'video-ingest');
+  const pending = frame.evaluate(async () => {
+    const sdk = (window as unknown as { trickIt: { request: (operation: string, payload: unknown) => Promise<unknown> } }).trickIt;
+    try {
+      await sdk.request('services', { feature: 'extract', input: { videoId: 'dQw4w9WgXcQ', startMs: 0, endMs: 3000, maxHeight: 720 } });
+      return 'unexpected success';
+    } catch (error) {
+      return (error as { code: string }).code;
+    }
+  });
+  await page.getByRole('button', { name: 'Verify test', exact: true }).click();
+  await page.getByRole('button', { name: 'Allow', exact: true }).click();
+  expect(await pending).toBe('source-blocked');
+});
+
 test('denial avoids the endpoint and provider quota becomes a broker error', async ({ page }) => {
   let calls = 0;
   await page.route('**/api/tools/runtime-fixture/audit', async route => { calls++; await route.fulfill({ status: 429, json: { error: 'provider-quota' } }); });

@@ -66,8 +66,8 @@ test('video-ingest maps source and size errors without leaking upstream details'
   const videoPolicy = { ...policy, toolId: 'video-clipper', feature: 'resolve', handler: 'video-ingest' };
   const videoPolicies = { 'video-clipper/resolve': videoPolicy };
   const verify = async () => Response.json({ success: true, hostname: 'tools.readynaz.com', action: 'svc_audit' });
-  for (const [upstreamCode, expectedStatus, expectedCode] of [['source_unavailable', 422, 'source-unavailable'], ['clip_too_large', 413, 'size']]) {
-    const videoEnv = { ...env, VIDEO_INGEST: { fetch: async () => Response.json({ error: upstreamCode, secret: 'private' }, { status: 422 }) } };
+  for (const [upstreamCode, upstreamStatus, expectedStatus, expectedCode] of [['source_unavailable', 422, 422, 'source-unavailable'], ['clip_too_large', 422, 413, 'size'], ['source_blocked', 503, 503, 'source-blocked']]) {
+    const videoEnv = { ...env, VIDEO_INGEST: { fetch: async () => Response.json({ error: upstreamCode, secret: 'private' }, { status: upstreamStatus }) } };
     const response = await handleService(req({ input: { videoId: 'dQw4w9WgXcQ' } }, 'video-clipper/resolve'), videoEnv, videoPolicies, verify);
     assert.equal(response.status, expectedStatus);
     assert.deepEqual(await response.json(), { error: expectedCode });
