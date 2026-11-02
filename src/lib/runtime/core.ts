@@ -271,7 +271,7 @@ export function parseRuntimeRequest(event: Pick<MessageEvent, 'source' | 'data'>
   return { request };
 }
 
-const DOWNLOAD_MIME = /^(?:text\/(?:plain|csv|html)|application\/(?:json|octet-stream|pdf|zip)|image\/(?:png|svg\+xml|gif|jpeg|webp|avif)|audio\/(?:mpeg|wav|ogg)|video\/webm)$/;
+const DOWNLOAD_MIME = /^(?:text\/(?:plain|csv|html)|application\/(?:json|octet-stream|pdf|zip)|image\/(?:png|svg\+xml|gif|jpeg|webp|avif)|audio\/(?:mpeg|wav|ogg)|video\/(?:webm|mp4))$/;
 function validDownloadFile(data: { filename?: unknown; mime?: unknown }) {
   return typeof data.filename === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_. -]{0,119}$/.test(data.filename) &&
     typeof data.mime === 'string' && DOWNLOAD_MIME.test(data.mime);
