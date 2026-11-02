@@ -26,6 +26,21 @@ export const artIconName = (manifest) => `${manifest.id}.${manifest.artwork.icon
 export function createGithubClient(credentials, fetcher = fetch) {
   const scoped = credentials && typeof credentials !== 'string';
   if (scoped && (typeof credentials.forRepository !== 'function' || typeof credentials.forOwner !== 'function')) throw new Error('invalid GitHub credential resolver');
+  const FETCH_ATTEMPTS = 3;
+  const RETRY_DELAY_MS = 1000;
+
+  /** Retry only thrown fetch errors (network failure or timeout); HTTP statuses are never retried. */
+  async function fetchWithRetry(url, options) {
+    for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
+      try {
+        return await fetcher(url, { ...options, signal: AbortSignal.timeout(30_000) });
+      } catch {
+        if (attempt === FETCH_ATTEMPTS) throw new Error('GitHub request failed');
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+
   return async function github(path, context = {}) {
     if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//') || /[\\\s\x00-\x1f\x7f#]/.test(path)) throw new Error('invalid GitHub API path');
     let token = scoped ? undefined : credentials;
@@ -42,13 +57,10 @@ export function createGithubClient(credentials, fetcher = fetch) {
         token = await credentials.forOwner(owner);
       } else throw new Error('GitHub credential context is not a repository or owner discovery request');
     }
-    let response;
-    try {
-      response = await fetcher(`https://api.github.com${path}`, {
-        headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'open-tools-registry', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        redirect: 'error', signal: AbortSignal.timeout(30_000)
-      });
-    } catch { throw new Error('GitHub request failed'); }
+    const response = await fetchWithRetry(`https://api.github.com${path}`, {
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'open-tools-registry', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      redirect: 'error'
+    });
     if (!response.ok) {
       // Only report standard numeric rate-limit headers; never emit token values
       // or the raw response body, which can contain sensitive provider details.
